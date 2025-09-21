@@ -177,9 +177,7 @@ keys/
 authorized_key.json
 
 # alembic
-alembic/versions/*
+#alembic/versions/*
 
-#rockerchat
-mongo-data/
 
 # прочие папки и файлы
