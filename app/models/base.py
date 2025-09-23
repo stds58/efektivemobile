@@ -31,8 +31,8 @@ UUIDPk = Annotated[
     )
 ]
 StrUniq = Annotated[str, mapped_column(unique=True, nullable=False)]
-Str = Annotated[str, mapped_column(nullable=False)]
-StrOptional = Annotated[str, mapped_column(nullable=True)]
+StrNullFalse = Annotated[str, mapped_column(nullable=False)]
+StrNullTrue = Annotated[str, mapped_column(nullable=True)]
 CreatedAt = Annotated[
     datetime,
     mapped_column(
@@ -48,7 +48,7 @@ UpdatedAt = Annotated[
         onupdate=func.now()
     ),
 ]
-IsTrue = Annotated[
+BoolDefTrue = Annotated[
     bool,
     mapped_column(
         default=True,
@@ -56,7 +56,7 @@ IsTrue = Annotated[
         nullable=False
     )
 ]
-IsFalse = Annotated[
+BoolDefFalse = Annotated[
     bool,
     mapped_column(
         default=False,

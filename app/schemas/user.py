@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Optional, Annotated
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, EmailStr, Field, StringConstraints, field_validator
 
 
-class SchemaUser(BaseModel):
+class SchemaUserBase(BaseModel):
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -17,15 +17,22 @@ class SchemaUser(BaseModel):
     is_admin: bool
 
 
-class SchemaUserRegister(BaseModel):
+class SchemaUserCreate(BaseModel):
     email: EmailStr = Field(..., description="Электронная почта")
     password: str = Field(..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
+    password_confirm: str = Field(..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
     first_name: str = Field(..., min_length=5, max_length=50, description="Имя, от 5 до 50 знаков")
     last_name: str = Field(..., min_length=5, max_length=50, description="Фамилия, от 5 до 50 знаков")
 
+    @field_validator('password_confirm')
+    def passwords_match(cls, v, values):
+        if 'password' in values.data and v != values.data['password']:
+            raise ValueError('Passwords do not match')
+        return v
+
 
 class SchemaUserPatch(BaseModel):
-    password: Annotated[str,StringConstraints(min_length=3, max_length=50)] | None = Field(None)
+    password: Annotated[str,StringConstraints(min_length=5, max_length=50)] | None = Field(None)
     first_name: Annotated[str,StringConstraints(min_length=3, max_length=50)] | None = Field(None)
     last_name: Annotated[str,StringConstraints(min_length=3, max_length=50)] | None = Field(None)
     is_active: bool | None = Field(None)
@@ -34,6 +41,16 @@ class SchemaUserPatch(BaseModel):
     is_admin: bool | None = Field(None)
 
 
-# class SUserAuth(BaseModel):
-#     email: EmailStr = Field(..., description="Электронная почта")
-#     password: str = Field(..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
+class SchemaUserLogin(BaseModel):
+    email: EmailStr = Field(..., description="Электронная почта")
+    password: str = Field(..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
+
+
+class UserPublic(BaseModel):
+    id: UUID
+    is_active: bool
+
+
+class UserInDB(BaseModel):
+    password: str
+
