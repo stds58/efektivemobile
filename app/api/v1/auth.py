@@ -69,8 +69,30 @@ async def swaggerlogin_for_access_token(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
 
+@router.post("/logout")
+async def logout(token: str = Depends(oauth2_scheme)):
+    # JWT токены stateless. Выход реализуется на клиенте путем удаления токена.
+    # На сервере можно добавить токен в черный список, если реализована такая логика.
+    AuthService.ban_token(token)
+    return {"message": "You have been logged out"}
+
 # @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-# async def logout(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(connection())):
-#     # JWT токены stateless. Выход реализуется на клиенте путем удаления токена.
-#     # На сервере можно добавить токен в черный список, если реализована такая логика.
-#     return
+# async def logout(token: str = Depends(oauth2_scheme)):
+#     AuthService.ban_token(token)
+#     # Для 204 No Content возвращаем None
+#     return None
+
+# @router.post("/logout", include_in_schema=True)
+# async def logout_swagger(token: str = Depends(oauth2_scheme)):
+#     AuthService.ban_token(token)
+#     return {"message": "Successfully logged out"}
+#
+# # Для реального клиента (без зависимости)
+# @router.post("/logout", include_in_schema=False)
+# async def logout_client(Authorization: str = Header(None)):
+#     if Authorization and Authorization.startswith("Bearer "):
+#         token = Authorization[7:]
+#         AuthService.ban_token(token)
+#         return {"message": "Successfully logged out"}
+#     raise HTTPException(status_code=401, detail="Authorization header required")
+

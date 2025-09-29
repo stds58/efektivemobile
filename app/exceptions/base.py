@@ -56,6 +56,16 @@ class UserInactiveError(CustomHTTPException):
     detail = "Check your inbox for activate"
 
 
+class BlacklistedError(CustomHTTPException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Your token has been revoked"
+
+
+class TokenExpiredError(CustomHTTPException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Token has expired"
+
+
 class CustomNotFoundException(CustomHTTPException):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "Ресурс не найден"

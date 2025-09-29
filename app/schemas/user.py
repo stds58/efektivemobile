@@ -33,7 +33,7 @@ class SchemaUserCreate(BaseModel):
     )
 
     @field_validator("password_confirm")
-    def passwords_match(self, v, values):
+    def passwords_match(cls, v, values):
         if "password" in values.data and v != values.data["password"]:
             raise ValueError("Passwords do not match")
         return v

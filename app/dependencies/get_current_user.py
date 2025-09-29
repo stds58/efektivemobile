@@ -9,7 +9,8 @@ from app.services.user import UserService
 from app.dependencies.get_db import connection
 from app.models.user import User
 from app.schemas.token import TokenData
-from app.exceptions.base import BadCredentialsError, UserInactiveError
+from app.exceptions.base import BadCredentialsError, UserInactiveError, BlacklistedError
+from app.core.blacklist import token_blacklist
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
@@ -20,6 +21,8 @@ async def get_current_user(
     db: AsyncSession = Depends(connection()),
 ) -> User:
     try:
+        if token in token_blacklist:
+            raise BlacklistedError
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
