@@ -59,12 +59,12 @@ def tree(dir_path: Path, prefix: str = ""):
             tree(path, prefix + extension)
 
 
-def print_python_files_content(root_path: Path, current_path: Path = None):
+def print_python_files_content(project_root: Path, current_path: Path = None):
     """
     Рекурсивно печатает относительный путь и содержимое всех .py файлов.
     """
     if current_path is None:
-        current_path = root_path
+        current_path = project_root
 
     try:
         for item in current_path.iterdir():
@@ -72,10 +72,10 @@ def print_python_files_content(root_path: Path, current_path: Path = None):
                 continue
 
             if item.is_dir():
-                print_python_files_content(root_path, item)
+                print_python_files_content(project_root, item)
             elif item.is_file() and item.suffix == ".py":
                 # Относительный путь от корня
-                rel_path = item.relative_to(root_path)
+                rel_path = item.relative_to(project_root)
                 print(f"\n{'='*80}")
                 print(f"{rel_path}")
                 print(f"{'='*80}")

@@ -1,7 +1,7 @@
-from sqlalchemy import String, Table, Column, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .base import Base, UUIDPk, CreatedAt, UpdatedAt, StrUniq, StrNullFalse, StrNullTrue
 from typing import List
+from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy.orm import Mapped, relationship
+from .base import Base, StrNullFalse, StrNullTrue
 
 
 # Связующая таблица для связи "многие-ко-многим" между ролями и разрешениями

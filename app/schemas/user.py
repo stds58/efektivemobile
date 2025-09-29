@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Annotated
+from typing import Annotated
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, StringConstraints, field_validator
 
@@ -25,7 +25,7 @@ class SchemaUserCreate(BaseModel):
     last_name: str = Field(..., min_length=5, max_length=50, description="Фамилия, от 5 до 50 знаков")
 
     @field_validator('password_confirm')
-    def passwords_match(cls, v, values):
+    def passwords_match(self, v, values):
         if 'password' in values.data and v != values.data['password']:
             raise ValueError('Passwords do not match')
         return v
@@ -53,4 +53,3 @@ class UserPublic(BaseModel):
 
 class UserInDB(BaseModel):
     password: str
-

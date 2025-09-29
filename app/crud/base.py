@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, ClassVar, Dict, Generic, List, Optional, TypeVar, Type, Any
+from typing import ClassVar, Dict, Generic, List, Optional, TypeVar, Type, Any
 from fastapi import status
 from pydantic import BaseModel as PydanticModel
 from sqlalchemy import and_, select, update
@@ -138,28 +138,31 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         return result.scalar_one_or_none()
 
 
-ModelType = TypeVar("ModelType", bound=Base)
 
-class CRUDBase(Generic[ModelType]):
-    def __init__(self, model: Type[ModelType]):
+# pylint: disable-next=no-name-in-module,invalid-name
+CrudModelType = TypeVar("CrudModelType", bound=Base)
+
+
+class CRUDBase(Generic[CrudModelType]):
+    def __init__(self, model: Type[CrudModelType]):
         self.model = model
 
-    async def get(self, db: AsyncSession, id: Any) -> Optional[ModelType]:
-        result = await db.execute(select(self.model).where(self.model.id == id))
+    async def get(self, db: AsyncSession, obj_id: Any) -> Optional[CrudModelType]:
+        result = await db.execute(select(self.model).where(self.model.id == obj_id))
         return result.scalars().first()
 
-    async def get_multi(self, db: AsyncSession, *, skip: int = 0, limit: int = 100) -> list[ModelType]:
+    async def get_multi(self, db: AsyncSession, *, skip: int = 0, limit: int = 100) -> list[CrudModelType]:
         result = await db.execute(select(self.model).offset(skip).limit(limit))
         return result.scalars().all()
 
-    async def create(self, db: AsyncSession, *, obj_in) -> ModelType:
+    async def create(self, db: AsyncSession, *, obj_in) -> CrudModelType:
         db_obj = self.model(**obj_in.dict())
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
 
-    async def update(self, db: AsyncSession, *, db_obj: ModelType, obj_in) -> ModelType:
+    async def update(self, db: AsyncSession, *, db_obj: CrudModelType, obj_in) -> CrudModelType:
         update_data = obj_in.dict(exclude_unset=True)
         for field in update_data:
             setattr(db_obj, field, update_data[field])
@@ -168,9 +171,8 @@ class CRUDBase(Generic[ModelType]):
         await db.refresh(db_obj)
         return db_obj
 
-    async def remove(self, db: AsyncSession, *, id: Any) -> ModelType:
-        obj = await self.get(db, id)
+    async def remove(self, db: AsyncSession, *, obj_id: Any) -> CrudModelType:
+        obj = await self.get(db, obj_id)
         await db.delete(obj)
         await db.commit()
         return obj
-

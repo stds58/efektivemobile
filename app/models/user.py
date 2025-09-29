@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import String, Boolean, Table, Column, ForeignKey
+from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
 from app.models.base import Base, StrUniq, StrNullFalse, StrNullTrue, BoolDefTrue, BoolDefFalse
 from app.models.role import Role

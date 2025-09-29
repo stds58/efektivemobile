@@ -1,18 +1,15 @@
-from typing import Optional, Annotated
+from typing import Annotated
 import jwt
-from fastapi import Depends, HTTPException, status
-from app.services.auth_service import AuthService
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+from jwt.exceptions import InvalidTokenError
+from app.core.config import settings
 from app.services.user import UserService
 from app.dependencies.get_db import connection
 from app.models.user import User
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import InvalidTokenError
-from passlib.context import CryptContext
-from app.core.config import settings
 from app.schemas.token import TokenData
-from app.crud.user import CRUDUser
-from app.exceptions.base import BadCredentialsError, EmailAlreadyRegisteredError, UserInactiveError
+from app.exceptions.base import BadCredentialsError, UserInactiveError
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
@@ -38,5 +35,3 @@ async def get_current_user(
     if not user.is_active:
         raise UserInactiveError
     return user
-
-#UserInactiveError

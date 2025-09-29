@@ -44,3 +44,17 @@ http://127.0.0.1:8000/api/docs
 Найти импорты, для которых нет записей в requirements.txt
 
     pip-missing-reqs app/ tests/
+
+**ruff**
+
+чтобы проверить:
+
+    ruff check .
+
+чтобы проверить и попытаться исправить ошибки: 
+
+    ruff check --fix .
+
+Отформатировать код, чтобы форматирование было в соответствие с ruff:
+
+    ruff format app

@@ -1,12 +1,11 @@
-from typing import Generic, TypeVar, Type, Optional, Any
-from sqlalchemy.orm import Session
-from app.models.user import User
-from app.core.security import get_password_hash, verify_password
-from app.schemas.user import SchemaUserCreate, SchemaUserBase, SchemaUserPatch, SchemaUserLogin, UserPublic
-from app.crud.base import BaseDAO, CRUDBase
+# pylint: disable=not-callable
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
+from app.models.user import User
+from app.core.security import get_password_hash
+from app.schemas.user import SchemaUserCreate, SchemaUserPatch
+from app.crud.base import CRUDBase
 
 
 class CRUDUser(CRUDBase[User]):
@@ -38,12 +37,12 @@ class CRUDUser(CRUDBase[User]):
         await db.refresh(db_obj)
         return db_obj
 
-    async def soft_delete(self, db: AsyncSession, *, id: str) -> bool:
-        user = await self.get(db, id)
-        if not user:
+    async def soft_delete(self, db: AsyncSession, *, obj_id: str) -> bool:
+        db_user = await self.get(db, obj_id)
+        if not db_user:
             return False
-        user.is_active = False
-        db.add(user)
+        db_user.is_active = False
+        db.add(db_user)
         await db.commit()
         return True
 

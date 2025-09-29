@@ -1,6 +1,6 @@
+from typing import Annotated
 from pydantic import BaseModel, ConfigDict
 from fastapi import Query
-from typing import Annotated
 
 
 class BaseConfigModel(BaseModel):

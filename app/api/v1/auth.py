@@ -1,14 +1,13 @@
+from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.schemas.user import SchemaUserCreate, SchemaUserBase, SchemaUserPatch, SchemaUserLogin, UserPublic, UserInDB
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
+from app.schemas.user import SchemaUserCreate, SchemaUserLogin, UserPublic
 from app.schemas.token import Token
 from app.services.auth_service import AuthService
 from app.services.user import UserService
 from app.dependencies.get_db import connection
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import settings
-from datetime import datetime, timedelta, timezone
-
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -16,11 +15,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 async def register_user(user_in: SchemaUserCreate, db: AsyncSession = Depends(connection())):
     user_service = UserService(db)
-    try:
-        user = await user_service.create_user(user_in)
-        return user
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    user = await user_service.create_user(user_in)
+    return user
 
 
 @router.post("/login", response_model=Token)
@@ -43,7 +39,7 @@ async def login_for_access_token(form_data: SchemaUserLogin, db: AsyncSession = 
 
 
 @router.post("/swaggerlogin", response_model=Token)
-async def login_for_access_token(
+async def swaggerlogin_for_access_token(
         form_data: OAuth2PasswordRequestForm = Depends(),
         db: AsyncSession = Depends(connection())
 ) -> Token:
@@ -66,8 +62,8 @@ async def login_for_access_token(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(connection())):
-    # JWT токены stateless. Выход реализуется на клиенте путем удаления токена.
-    # На сервере можно добавить токен в черный список, если реализована такая логика.
-    return
+# @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+# async def logout(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(connection())):
+#     # JWT токены stateless. Выход реализуется на клиенте путем удаления токена.
+#     # На сервере можно добавить токен в черный список, если реализована такая логика.
+#     return

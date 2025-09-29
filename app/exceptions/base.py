@@ -1,5 +1,6 @@
 import logging
 from typing import Callable
+import socket
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -15,7 +16,7 @@ class CustomHTTPException(HTTPException):
     detail = None
     log_func: Callable = logging.info
 
-    def __init__(self, *args: object, **kwargs) -> None:
+    def __init__(self) -> None:
         super().__init__(status_code=self.status_code, detail=self.detail)
 
     async def __call__(self, request: Request, exception: Exception) -> JSONResponse:

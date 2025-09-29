@@ -14,7 +14,7 @@ async_sessionmaker:
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID, uuid4
-from sqlalchemy import DateTime, func, UUID as SQLAlchemyUUID, text, true, false
+from sqlalchemy import DateTime, func, UUID as SQLAlchemyUUID, true, false
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, mapped_column, declared_attr, Mapped
 
