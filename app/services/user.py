@@ -6,6 +6,7 @@ from app.models.user import User
 from app.schemas.user import SchemaUserCreate, SchemaUserBase, SchemaUserPatch, SchemaUserLogin, UserPublic, UserInDB
 from app.services.auth_service import AuthService
 from app.crud.user import user as crud_user
+from app.exceptions.base import BadCredentialsError, EmailAlreadyRegisteredError, UserInactiveError
 
 
 
@@ -22,14 +23,14 @@ class UserService:
     async def create_user(self, user_in: SchemaUserCreate) -> UserPublic:
         existing_user = await self.get_user_by_email(user_in.email)
         if existing_user:
-            raise ValueError("Email already registered")
+            raise EmailAlreadyRegisteredError
         user = await crud_user.create(self.db, obj_in=user_in)
         return UserPublic.model_validate(user, from_attributes=True)
 
     async def update_user(self, user_id: str, user_in: SchemaUserPatch) -> Optional[UserPublic]:
         user = await self.get_user_by_id(user_id)
         if not user:
-            return None
+            raise BadCredentialsError
         updated_user = await crud_user.update(self.db, db_obj=user, obj_in=user_in)
         return UserPublic.model_validate(updated_user, from_attributes=True)
 
@@ -38,9 +39,10 @@ class UserService:
 
     async def authenticate_user(self, email: str, password: str) -> Optional[User]:
         user = await self.get_user_by_email(email)
-        if not user or not user.is_active:
-            return None
+        if not user:
+            raise BadCredentialsError
+        if not user.is_active:
+            raise UserInactiveError
         if not AuthService.verify_password(password, user.password):
-            return None
+            raise BadCredentialsError
         return user
-

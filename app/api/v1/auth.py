@@ -18,7 +18,6 @@ async def register_user(user_in: SchemaUserCreate, db: AsyncSession = Depends(co
     user_service = UserService(db)
     try:
         user = await user_service.create_user(user_in)
-        print('user == ',user)
         return user
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

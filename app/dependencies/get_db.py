@@ -21,8 +21,8 @@ def connection(isolation_level: Optional[str] = None, commit: bool = True):
     async def dependency() -> AsyncGenerator[AsyncSession, None]:
         async with get_session_with_isolation(async_session_maker, isolation_level) as session:
             try:
-                result = await session.execute(text("SHOW transaction_isolation;"))
-                print("SHOW transaction_isolation;", result.scalar())
+                #result = await session.execute(text("SHOW transaction_isolation;"))
+                #print("SHOW transaction_isolation;", result.scalar())
                 yield session
                 if commit and session.in_transaction():
                     await session.commit()
