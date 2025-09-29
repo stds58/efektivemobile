@@ -1,13 +1,23 @@
+from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.auth import router as auth_router
 from app.api.v1.user import router as users_router
 from app.core.config import settings
+from app.utils.importer_data import seed_all
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if settings.ENVIRONMENT == "development":
+        await seed_all()
+    yield
 
 
 app = FastAPI(
     debug=settings.DEBUG,
+    lifespan=lifespan,
     title="API",
     version="0.1.0",
     docs_url="/api/docs",

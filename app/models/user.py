@@ -12,7 +12,6 @@ from app.models.base import (
 from app.models.role import Role
 
 
-# Связующая таблица для связи "многие-ко-многим" между пользователями и ролями
 user_role_association = Table(
     "user_roles",
     Base.metadata,

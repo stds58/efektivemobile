@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     """
 
     APP_NAME: str
+    ENVIRONMENT: str
     DEBUG: bool
     SECRET_KEY: str = Field(default_factory=lambda: Settings._generate_secret_key())
     SESSION_MIDDLEWARE_SECRET_KEY: str
