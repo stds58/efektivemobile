@@ -11,10 +11,11 @@ async_sessionmaker:
     Фабрика сессий для асинхронного взаимодействия с базой данных.
     Сессии используются для выполнения запросов и транзакций.
 """
+
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID, uuid4
-from sqlalchemy import DateTime, func, UUID as SQLAlchemyUUID, text, true, false
+from sqlalchemy import DateTime, func, UUID as SQLAlchemyUUID, true, false
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, mapped_column, declared_attr, Mapped
 
@@ -27,42 +28,26 @@ UUIDPk = Annotated[
         SQLAlchemyUUID(as_uuid=True),  # храним как UUID в БД, не как строку
         primary_key=True,
         default=uuid4,  # генерируется на стороне Python
-        server_default=None
-    )
+        server_default=None,
+    ),
 ]
 StrUniq = Annotated[str, mapped_column(unique=True, nullable=False)]
-Str = Annotated[str, mapped_column(nullable=False)]
-StrOptional = Annotated[str, mapped_column(nullable=True)]
+StrNullFalse = Annotated[str, mapped_column(nullable=False)]
+StrNullTrue = Annotated[str, mapped_column(nullable=True)]
 CreatedAt = Annotated[
-    datetime,
-    mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
+    datetime, mapped_column(DateTime(timezone=True), server_default=func.now())
 ]
 UpdatedAt = Annotated[
     datetime,
     mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     ),
 ]
-IsTrue = Annotated[
-    bool,
-    mapped_column(
-        default=True,
-        server_default=true(),
-        nullable=False
-    )
+BoolDefTrue = Annotated[
+    bool, mapped_column(default=True, server_default=true(), nullable=False)
 ]
-IsFalse = Annotated[
-    bool,
-    mapped_column(
-        default=False,
-        server_default=false(),
-        nullable=False
-    )
+BoolDefFalse = Annotated[
+    bool, mapped_column(default=False, server_default=false(), nullable=False)
 ]
 
 

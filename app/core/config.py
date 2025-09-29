@@ -1,6 +1,7 @@
 """
 Класс настроек приложения
 """
+
 from functools import lru_cache
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
@@ -14,10 +15,13 @@ class Settings(BaseSettings):
     """
     берёт настройки из .env-а
     """
+
     APP_NAME: str
     DEBUG: bool
     SECRET_KEY: str
     SESSION_MIDDLEWARE_SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ALGORITHM: str
 
     DB_NAME: str
     DB_USER: str
