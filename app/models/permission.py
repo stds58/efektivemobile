@@ -6,11 +6,12 @@ from .base import Base, StrNullFalse, StrNullTrue
 
 # Связующая таблица для связи "многие-ко-многим" между ролями и разрешениями
 role_permission_association = Table(
-    'role_permissions',
+    "role_permissions",
     Base.metadata,
-    Column('role_id', ForeignKey('role.id'), primary_key=True),
-    Column('permission_id', ForeignKey('permission.id'), primary_key=True)
+    Column("role_id", ForeignKey("role.id"), primary_key=True),
+    Column("permission_id", ForeignKey("permission.id"), primary_key=True),
 )
+
 
 class Permission(Base):
     resource: Mapped[StrNullFalse]
@@ -19,9 +20,7 @@ class Permission(Base):
 
     # Связь с ролями
     roles: Mapped[List["Role"]] = relationship(
-        "Role",
-        secondary=role_permission_association,
-        back_populates="permissions"
+        "Role", secondary=role_permission_association, back_populates="permissions"
     )
 
     def __repr__(self):

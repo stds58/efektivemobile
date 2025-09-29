@@ -3,6 +3,7 @@
 tree.py - выводит дерево проекта, исключая мусорные директории и файлы
 python app/utils/tree.py .
 """
+
 import sys
 from pathlib import Path
 
@@ -44,7 +45,7 @@ def tree(dir_path: Path, prefix: str = ""):
     try:
         contents = sorted(
             [p for p in dir_path.iterdir() if not should_ignore(p.name)],
-            key=lambda p: (p.is_file(), p.name.lower())
+            key=lambda p: (p.is_file(), p.name.lower()),
         )
     except PermissionError:
         print(prefix + "└── [не доступно]")
@@ -76,9 +77,9 @@ def print_python_files_content(project_root: Path, current_path: Path = None):
             elif item.is_file() and item.suffix == ".py":
                 # Относительный путь от корня
                 rel_path = item.relative_to(project_root)
-                print(f"\n{'='*80}")
+                print(f"\n{'=' * 80}")
                 print(f"{rel_path}")
-                print(f"{'='*80}")
+                print(f"{'=' * 80}")
                 try:
                     with open(item, "r", encoding="utf-8") as f:
                         content = f.read()
@@ -102,8 +103,8 @@ if __name__ == "__main__":
     print(root_path.name + "/")
     tree(root_path)
 
-    print("\n\n" + "="*100)
+    print("\n\n" + "=" * 100)
     print("СОДЕРЖИМОЕ ВСЕХ .PY ФАЙЛОВ:")
-    print("="*100)
+    print("=" * 100)
 
     print_python_files_content(root_path)

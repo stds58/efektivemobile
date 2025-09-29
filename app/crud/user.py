@@ -19,14 +19,16 @@ class CRUDUser(CRUDBase[User]):
             password=get_password_hash(obj_in.password),
             first_name=obj_in.first_name,
             last_name=obj_in.last_name,
-            is_active=True
+            is_active=True,
         )
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
 
-    async def update(self, db: AsyncSession, *, db_obj: User, obj_in: SchemaUserPatch) -> User:
+    async def update(
+        self, db: AsyncSession, *, db_obj: User, obj_in: SchemaUserPatch
+    ) -> User:
         update_data = obj_in.dict(exclude_unset=True)
         if "password" in update_data and update_data["password"]:
             update_data["password"] = get_password_hash(update_data.pop("password"))
@@ -45,6 +47,7 @@ class CRUDUser(CRUDBase[User]):
         db.add(db_user)
         await db.commit()
         return True
+
 
 # Экземпляр для использования в сервисах
 user = CRUDUser(User)

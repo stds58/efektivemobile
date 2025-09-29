@@ -17,10 +17,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    db: AsyncSession = Depends(connection())
+    db: AsyncSession = Depends(connection()),
 ) -> User:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         user_id = payload.get("sub")
         if user_id is None:
             raise BadCredentialsError

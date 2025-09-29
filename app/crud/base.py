@@ -46,7 +46,9 @@ class FiltrMixin:
 
     @classmethod
     def _apply_pagination(cls, query, pagination: PaginationParams):
-        return query.limit(pagination.per_page).offset(pagination.per_page * (pagination.page - 1))
+        return query.limit(pagination.per_page).offset(
+            pagination.per_page * (pagination.page - 1)
+        )
 
 
 class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]):
@@ -67,11 +69,18 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         query = select(cls.model)
         if filters is not None:
             query = cls._apply_filters(query, filters)
-            if hasattr(filters, "form_id_prefix") and filters.form_id_prefix is not None:
+            if (
+                hasattr(filters, "form_id_prefix")
+                and filters.form_id_prefix is not None
+            ):
                 if hasattr(cls.model, "form_id"):
-                    query = query.where(cls.model.form_id.like(f"{filters.form_id_prefix}%"))
+                    query = query.where(
+                        cls.model.form_id.like(f"{filters.form_id_prefix}%")
+                    )
                 else:
-                    raise AttributeError(f"Model {cls.model.__name__} has no attribute 'form_id'")
+                    raise AttributeError(
+                        f"Model {cls.model.__name__} has no attribute 'form_id'"
+                    )
         if order_by:
             column = getattr(cls.model, order_by)
             if order.lower() == "desc":
@@ -82,7 +91,10 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
             query = cls._apply_pagination(query, pagination)
         result = await session.execute(query)
         results = result.unique().scalars().all()
-        return [cls.pydantic_model.model_validate(obj, from_attributes=True) for obj in results]
+        return [
+            cls.pydantic_model.model_validate(obj, from_attributes=True)
+            for obj in results
+        ]
 
     @classmethod
     async def add_one(cls, session: AsyncSession, values: Dict) -> ModelType:
@@ -113,30 +125,39 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
 
     @classmethod
     async def find_items_since(cls, last_id: int, session: AsyncSession):
-        result = await session.execute(select(cls.model).where(cls.model.id > last_id).order_by(cls.model.id))
+        result = await session.execute(
+            select(cls.model).where(cls.model.id > last_id).order_by(cls.model.id)
+        )
         return result.scalars().all()
 
     @classmethod
-    async def update_one(cls, model_id: int, values: Dict, session: AsyncSession) -> None:
+    async def update_one(
+        cls, model_id: int, values: Dict, session: AsyncSession
+    ) -> None:
         stmt = update(cls.model).where(cls.model.id == model_id).values(values)
         await session.execute(stmt)
         await session.commit()
 
     @classmethod
-    async def find_one_or_none(cls, session: AsyncSession, filters: FilterSchemaType = None) -> Optional[ModelType]:
+    async def find_one_or_none(
+        cls, session: AsyncSession, filters: FilterSchemaType = None
+    ) -> Optional[ModelType]:
         query = select(cls.model)
         if filters is not None:
             if isinstance(filters, dict):
-                filter_dict = filters  # Если filters уже словарь, используем его напрямую
+                filter_dict = (
+                    filters  # Если filters уже словарь, используем его напрямую
+                )
             else:
                 # Если filters — это Pydantic-модель, преобразуем её в словарь
                 filter_dict = filters.model_dump(exclude_unset=True)
             # filter_dict = filters.model_dump(exclude_unset=True)
-            filter_dict = {key: value for key, value in filter_dict.items() if value is not None}
+            filter_dict = {
+                key: value for key, value in filter_dict.items() if value is not None
+            }
             query = query.filter_by(**filter_dict)
         result = await session.execute(query)
         return result.scalar_one_or_none()
-
 
 
 # pylint: disable-next=no-name-in-module,invalid-name
@@ -151,7 +172,9 @@ class CRUDBase(Generic[CrudModelType]):
         result = await db.execute(select(self.model).where(self.model.id == obj_id))
         return result.scalars().first()
 
-    async def get_multi(self, db: AsyncSession, *, skip: int = 0, limit: int = 100) -> list[CrudModelType]:
+    async def get_multi(
+        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
+    ) -> list[CrudModelType]:
         result = await db.execute(select(self.model).offset(skip).limit(limit))
         return result.scalars().all()
 
@@ -162,7 +185,9 @@ class CRUDBase(Generic[CrudModelType]):
         await db.refresh(db_obj)
         return db_obj
 
-    async def update(self, db: AsyncSession, *, db_obj: CrudModelType, obj_in) -> CrudModelType:
+    async def update(
+        self, db: AsyncSession, *, db_obj: CrudModelType, obj_in
+    ) -> CrudModelType:
         update_data = obj_in.dict(exclude_unset=True)
         for field in update_data:
             setattr(db_obj, field, update_data[field])

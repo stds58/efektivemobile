@@ -14,7 +14,9 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
-app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_MIDDLEWARE_SECRET_KEY, max_age=3600)
+app.add_middleware(
+    SessionMiddleware, secret_key=settings.SESSION_MIDDLEWARE_SECRET_KEY, max_age=3600
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,15 +40,13 @@ app.add_middleware(
 )
 
 
-
 app.include_router(auth_router)
 app.include_router(users_router)
+
 
 @app.get("/")
 def root():
     return {"message": "Auth System is running"}
-
-
 
 
 if __name__ == "__main__":

@@ -28,9 +28,13 @@ class CustomHTTPException(HTTPException):
 
 
 class HttpExceptionHandler(Exception):
-    async def __call__(self, request: Request, exception: HTTPException) -> JSONResponse | RedirectResponse:
+    async def __call__(
+        self, request: Request, exception: HTTPException
+    ) -> JSONResponse | RedirectResponse:
         if exception.headers and "Location" in exception.headers:
-            return RedirectResponse(url=exception.headers["Location"], status_code=exception.status_code)
+            return RedirectResponse(
+                url=exception.headers["Location"], status_code=exception.status_code
+            )
         return JSONResponse(
             status_code=exception.status_code,
             content={"error": exception.detail},
@@ -50,6 +54,7 @@ class EmailAlreadyRegisteredError(CustomHTTPException):
 class UserInactiveError(CustomHTTPException):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "Check your inbox for activate"
+
 
 class CustomNotFoundException(CustomHTTPException):
     status_code = status.HTTP_404_NOT_FOUND

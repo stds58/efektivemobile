@@ -4,8 +4,11 @@ from app.models.user import User
 from app.schemas.user import SchemaUserCreate, SchemaUserPatch, UserPublic
 from app.services.auth_service import AuthService
 from app.crud.user import user as crud_user
-from app.exceptions.base import BadCredentialsError, EmailAlreadyRegisteredError, UserInactiveError
-
+from app.exceptions.base import (
+    BadCredentialsError,
+    EmailAlreadyRegisteredError,
+    UserInactiveError,
+)
 
 
 class UserService:
@@ -25,7 +28,9 @@ class UserService:
         user = await crud_user.create(self.db, obj_in=user_in)
         return UserPublic.model_validate(user, from_attributes=True)
 
-    async def update_user(self, user_id: str, user_in: SchemaUserPatch) -> Optional[UserPublic]:
+    async def update_user(
+        self, user_id: str, user_in: SchemaUserPatch
+    ) -> Optional[UserPublic]:
         user = await self.get_user_by_id(user_id)
         if not user:
             raise BadCredentialsError

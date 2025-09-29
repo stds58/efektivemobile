@@ -1,17 +1,25 @@
 from typing import List
 from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
-from app.models.base import Base, StrUniq, StrNullFalse, StrNullTrue, BoolDefTrue, BoolDefFalse
+from app.models.base import (
+    Base,
+    StrUniq,
+    StrNullFalse,
+    StrNullTrue,
+    BoolDefTrue,
+    BoolDefFalse,
+)
 from app.models.role import Role
 
 
 # Связующая таблица для связи "многие-ко-многим" между пользователями и ролями
 user_role_association = Table(
-    'user_roles',
+    "user_roles",
     Base.metadata,
-    Column('user_id', ForeignKey('user.id'), primary_key=True),
-    Column('role_id', ForeignKey('role.id'), primary_key=True)
+    Column("user_id", ForeignKey("user.id"), primary_key=True),
+    Column("role_id", ForeignKey("role.id"), primary_key=True),
 )
+
 
 class User(Base):
     email: Mapped[StrUniq]
@@ -27,7 +35,7 @@ class User(Base):
         "Role",
         secondary=user_role_association,
         back_populates="users",
-        lazy="selectin"  # Для асинхронной загрузки ролей вместе с пользователем
+        lazy="selectin",  # Для асинхронной загрузки ролей вместе с пользователем
     )
 
     def __str__(self):

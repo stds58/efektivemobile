@@ -7,8 +7,10 @@ class RoleBase(BaseModel):
     name: str
     description: Optional[str] = None
 
+
 class RoleCreate(RoleBase):
     pass
+
 
 class RoleInDB(RoleBase):
     id: UUID

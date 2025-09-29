@@ -12,15 +12,22 @@ from app.dependencies.get_db import connection
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
-async def register_user(user_in: SchemaUserCreate, db: AsyncSession = Depends(connection())):
+
+@router.post(
+    "/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED
+)
+async def register_user(
+    user_in: SchemaUserCreate, db: AsyncSession = Depends(connection())
+):
     user_service = UserService(db)
     user = await user_service.create_user(user_in)
     return user
 
 
 @router.post("/login", response_model=Token)
-async def login_for_access_token(form_data: SchemaUserLogin, db: AsyncSession = Depends(connection())) -> Token:
+async def login_for_access_token(
+    form_data: SchemaUserLogin, db: AsyncSession = Depends(connection())
+) -> Token:
     # Note: В реальном приложении для логина используется отдельная схема с email и password, а не UserCreate.
     # Для простоты примера используем UserCreate, но это неправильно.
     user_service = UserService(db)
@@ -40,8 +47,8 @@ async def login_for_access_token(form_data: SchemaUserLogin, db: AsyncSession = 
 
 @router.post("/swaggerlogin", response_model=Token)
 async def swaggerlogin_for_access_token(
-        form_data: OAuth2PasswordRequestForm = Depends(),
-        db: AsyncSession = Depends(connection())
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(connection()),
 ) -> Token:
     # Note: В реальном приложении для логина используется отдельная схема с email и password, а не UserCreate.
     # Для простоты примера используем UserCreate, но это неправильно.
