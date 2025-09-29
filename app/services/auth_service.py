@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import jwt
+from cachetools import TTLCache
 from passlib.context import CryptContext
 from app.core.config import settings
+from app.exceptions.base import BlacklistedError, TokenExpiredError
+from app.core.blacklist import token_blacklist
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -37,24 +40,16 @@ class AuthService:
     @staticmethod
     def decode_access_token(token: str) -> Optional[dict]:
         try:
+            if token in token_blacklist:
+                raise BlacklistedError
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
             return payload
         except jwt.PyJWTError:
-            return None
+            raise TokenExpiredError
 
-    # @staticmethod
-    # def get_user(db, username: str):
-    #     if username in db:
-    #         user_dict = db[username]
-    #         return UserInDB(**user_dict)
-    #
-    # @staticmethod
-    # def authenticate_user(db, username: str, password: str):
-    #     user = get_user(db, username)
-    #     if not user:
-    #         return False
-    #     if not verify_password(password, user.hashed_password):
-    #         return False
-    #     return user
+    @staticmethod
+    def ban_token(token: str):
+        """Добавить токен в чёрный список"""
+        token_blacklist[token] = True
