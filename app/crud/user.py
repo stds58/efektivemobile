@@ -1,7 +1,9 @@
 # pylint: disable=not-callable
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from app.models import Role
 from app.models.user import User
 from app.core.security import get_password_hash
 from app.schemas.user import SchemaUserCreate, SchemaUserPatch
@@ -12,6 +14,15 @@ class CRUDUser(CRUDBase[User]):
     async def get_by_email(self, db: AsyncSession, *, email: str) -> Optional[User]:
         result = await db.execute(select(User).where(User.email == email))
         return result.scalars().first()
+
+    async def get_user_roles(self, db: AsyncSession, *, user_id: int) -> List[Role]:
+        result = await db.execute(
+            select(User)
+            .where(User.id == user_id)
+            .options(selectinload(User.roles))
+        )
+        user = result.scalar_one_or_none()
+        return user.roles if user else []
 
     async def create(self, db: AsyncSession, *, obj_in: SchemaUserCreate) -> User:
         db_obj = User(
@@ -47,6 +58,7 @@ class CRUDUser(CRUDBase[User]):
         db.add(db_user)
         await db.commit()
         return True
+
 
 
 # Экземпляр для использования в сервисах

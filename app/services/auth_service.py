@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import jwt
-from cachetools import TTLCache
 from passlib.context import CryptContext
 from app.core.config import settings
 from app.exceptions.base import BlacklistedError, TokenExpiredError

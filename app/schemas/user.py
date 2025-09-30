@@ -12,10 +12,6 @@ class SchemaUserBase(BaseModel):
     first_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     last_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     is_active: bool
-    is_user: bool
-    is_manager: bool
-    is_admin: bool
-
 
 class SchemaUserCreate(BaseModel):
     email: EmailStr = Field(..., description="Электронная почта")
@@ -49,10 +45,6 @@ class SchemaUserPatch(BaseModel):
     last_name: Annotated[str, StringConstraints(min_length=3, max_length=50)] | None = (
         Field(None)
     )
-    is_active: bool | None = Field(None)
-    is_user: bool | None = Field(None)
-    is_manager: bool | None = Field(None)
-    is_admin: bool | None = Field(None)
 
 
 class SchemaUserLogin(BaseModel):
@@ -63,8 +55,13 @@ class SchemaUserLogin(BaseModel):
 
 
 class UserPublic(BaseModel):
-    id: UUID
+    created_at: datetime
+    updated_at: datetime
+    email: EmailStr
+    first_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
+    last_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     is_active: bool
+    #role: list[str] | None = None
 
 
 class UserInDB(BaseModel):

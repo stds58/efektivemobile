@@ -7,7 +7,6 @@ from app.models.base import (
     StrNullFalse,
     StrNullTrue,
     BoolDefTrue,
-    BoolDefFalse,
 )
 from app.models.role import Role
 
@@ -26,9 +25,6 @@ class User(Base):
     first_name: Mapped[StrNullTrue]
     last_name: Mapped[StrNullTrue]
     is_active: Mapped[BoolDefTrue]
-    is_user: Mapped[BoolDefTrue]
-    is_manager: Mapped[BoolDefFalse]
-    is_admin: Mapped[BoolDefFalse]
 
     roles: Mapped[List["Role"]] = relationship(
         "Role",

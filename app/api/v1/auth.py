@@ -28,13 +28,13 @@ async def register_user(
 async def login_for_access_token(
     form_data: SchemaUserLogin, db: AsyncSession = Depends(connection())
 ) -> Token:
-    # Note: В реальном приложении для логина используется отдельная схема с email и password, а не UserCreate.
-    # Для простоты примера используем UserCreate, но это неправильно.
     user_service = UserService(db)
     user = await user_service.authenticate_user(form_data.email, form_data.password)
+    user_roles = await user_service.get_user_roles(user_id=user.id)
+    role_names = [role.name for role in user_roles]
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = AuthService.create_access_token(
-        data={"sub": str(user.id)}, expires_delta=access_token_expires
+        data={"sub": str(user.id), "role": role_names}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -44,13 +44,13 @@ async def swaggerlogin_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(connection()),
 ) -> Token:
-    # Note: В реальном приложении для логина используется отдельная схема с email и password, а не UserCreate.
-    # Для простоты примера используем UserCreate, но это неправильно.
     user_service = UserService(db)
     user = await user_service.authenticate_user(form_data.username, form_data.password)
+    user_roles = await user_service.get_user_roles(user_id=user.id)
+    role_names = [role.name for role in user_roles]
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = AuthService.create_access_token(
-        data={"sub": str(user.id)}, expires_delta=access_token_expires
+        data={"sub": str(user.id), "role": role_names}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
 
