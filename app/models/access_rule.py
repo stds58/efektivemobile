@@ -19,4 +19,4 @@ class AccessRule(Base):
     element: Mapped["BusinessElement"] = relationship("BusinessElement")
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} (id={self.role_id}, {self.element_id})>"
+        return f"<{self.__class__.__name__} (id={self.role_id}, element={self.businesselement_id})>"

@@ -66,8 +66,12 @@ class TokenExpiredError(CustomHTTPException):
 
 class PermissionDenied(CustomHTTPException):
     status_code = status.HTTP_403_FORBIDDEN
-    default_detail = "Permission denied"
+    detail = "Permission denied"
 
+
+class VerifyHashError(CustomHTTPException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Invalid email or password"
 
 class CustomNotFoundException(CustomHTTPException):
     status_code = status.HTTP_404_NOT_FOUND
