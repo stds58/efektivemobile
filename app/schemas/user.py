@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, StringConstraints, field_validator
 
@@ -12,6 +12,17 @@ class SchemaUserBase(BaseModel):
     first_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     last_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     is_active: bool
+
+
+class SchemaUserFilter(BaseModel):
+    id: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    is_active: Optional[bool] = None
+
 
 class SchemaUserCreate(BaseModel):
     email: EmailStr = Field(..., description="Электронная почта")
@@ -61,7 +72,7 @@ class UserPublic(BaseModel):
     first_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     last_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     is_active: bool
-    #role: list[str] | None = None
+    role: list[str] | None = None
 
 
 class UserInDB(BaseModel):

@@ -6,8 +6,20 @@ from sqlalchemy.orm import selectinload
 from app.models import Role
 from app.models.user import User
 from app.core.security import get_password_hash
-from app.schemas.user import SchemaUserCreate, SchemaUserPatch
+from app.schemas.user import SchemaUserCreate, SchemaUserPatch, SchemaUserBase, SchemaUserFilter
 from app.crud.base import CRUDBase
+from app.crud.base import BaseDAO
+
+
+
+class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
+    model = User
+    create_schema = SchemaUserPatch
+    filter_schema = SchemaUserFilter
+    pydantic_model = SchemaUserBase
+
+    #_exclude_from_filter_by = {"id"}
+
 
 
 class CRUDUser(CRUDBase[User]):

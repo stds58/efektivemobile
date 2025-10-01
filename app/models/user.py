@@ -34,7 +34,7 @@ class User(Base):
     )
 
     def __str__(self):
-        return f"<{self.__class__.__name__} (id={self.id}, name={self.email!r})>"
+        return f"<{self.__class__.__name__} (id={self.id}, email={self.email!r})>"
 
     def __repr__(self):
         return f"<{self.__class__.__name__} (id={self.id}, email={self.email})>"
