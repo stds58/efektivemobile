@@ -4,10 +4,12 @@ from pydantic import BaseModel as PydanticModel
 from sqlalchemy import and_, select, update
 from sqlalchemy import delete as sqlalchemy_delete
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from app.models.base import Base
 from app.schemas.base import PaginationParams
+from app.exceptions.base import MultipleResultsError
 
 
 assert issubclass(Base, DeclarativeBase)
@@ -88,6 +90,23 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         ]
 
     @classmethod
+    async def find_one(
+            cls,
+            session: AsyncSession,
+            filters: Optional[FilterSchemaType] = None
+    ) -> PydanticModel:
+        query = select(cls.model)
+        if filters is not None:
+            query = cls._apply_filters(query, filters)
+
+        result = await session.execute(query)
+        try:
+            result = result.unique().scalars().one_or_none()
+        except MultipleResultsFound:
+            raise MultipleResultsError
+        return result
+
+    @classmethod
     async def add_one(cls, session: AsyncSession, values: Dict) -> ModelType:
         new_instance = cls.model(**values)
         session.add(new_instance)
@@ -125,7 +144,6 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
     async def update_one(
         cls, model_id: int, values: Dict, session: AsyncSession
     ) -> None:
-        print('values', values)
         stmt = update(cls.model).where(cls.model.id == model_id).values(values)
         await session.execute(stmt)
         await session.commit()

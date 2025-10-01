@@ -38,7 +38,7 @@ async def find_many_user(
 async def update_user(
         filters: SchemaUserPatch,
         session: AsyncSession,
-        user_id: UUID,
+        user_id: UUID
 ):
     filters_dict = filters.model_dump(exclude_unset=True)
     password = filters_dict.get("password")
@@ -46,8 +46,8 @@ async def update_user(
     filters_dict["password"] = password_hash
     await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
     filter_obj = SchemaUserFilter(id=user_id)
-    user = await UserDAO.find_many(filters=filter_obj, session=session)
-    return user[0]
+    user = await UserDAO.find_one(filters=filter_obj, session=session)
+    return user
 
 
 

@@ -73,6 +73,11 @@ class VerifyHashError(CustomHTTPException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Invalid email or password"
 
+
+class MultipleResultsError(CustomHTTPException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Multiple rows were found when one or none was required"
+
 class CustomNotFoundException(CustomHTTPException):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "Ресурс не найден"
