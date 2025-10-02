@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, StringConstraints, field_validator
+from app.exceptions.base import PasswordMismatchError
 
 
 class SchemaUserBase(BaseModel):
@@ -42,7 +43,7 @@ class SchemaUserCreate(BaseModel):
     @field_validator("password_confirm")
     def passwords_match(cls, v, values):
         if "password" in values.data and v != values.data["password"]:
-            raise ValueError("Passwords do not match")
+            raise PasswordMismatchError
         return v
 
 

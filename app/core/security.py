@@ -1,14 +1,19 @@
 from datetime import datetime, timedelta, timezone
 import jwt
 from passlib.context import CryptContext
+from passlib.exc import UnknownHashError
 from app.core.config import settings
+from app.exceptions.base import VerifyHashError
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except UnknownHashError:
+        raise VerifyHashError
 
 
 def get_password_hash(password: str) -> str:

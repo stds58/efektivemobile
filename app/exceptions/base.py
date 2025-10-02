@@ -78,6 +78,12 @@ class MultipleResultsError(CustomHTTPException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Multiple rows were found when one or none was required"
 
+
+class PasswordMismatchError(CustomHTTPException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Password and confirmation do not match"
+
+
 class CustomNotFoundException(CustomHTTPException):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "Ресурс не найден"
@@ -87,15 +93,6 @@ class CustomBadRequestException(CustomHTTPException):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "Неверный запрос"
 
-
-class CustomInternalServerException(CustomHTTPException):
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    detail = "Внутренняя ошибка сервера"
-    log_func = logger.error
-
-
-class IdentityProviderException(CustomInternalServerException):
-    detail = "Не удалось проверить доступ"
 
 
 class TokenExpiredException(CustomHTTPException):
@@ -113,14 +110,25 @@ class ForbiddenException(CustomHTTPException):
     detail = "Доступ запрещен"
 
 
-class IncorrectEmailOrPasswordException(CustomHTTPException):
-    status_code = status.HTTP_401_UNAUTHORIZED
-    detail = "Неверный email или пароль"
+# class IncorrectEmailOrPasswordException(CustomHTTPException):
+#     status_code = status.HTTP_401_UNAUTHORIZED
+#     detail = "Неверный email или пароль"
 
 
-class UserAlreadyExistsError(CustomHTTPException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Пользователь с таким email уже существует"
+# class UserAlreadyExistsError(CustomHTTPException):
+#     status_code = status.HTTP_400_BAD_REQUEST
+#     detail = "Пользователь с таким email уже существует"
+
+
+
+class CustomInternalServerException(CustomHTTPException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Внутренняя ошибка сервера"
+    log_func = logger.error
+
+
+class IdentityProviderException(CustomInternalServerException):
+    detail = "Не удалось проверить доступ"
 
 
 class RedisConnectionException(CustomInternalServerException):
@@ -154,8 +162,8 @@ class ValueErrorException(CustomInternalServerException):
 
 
 class IntegrityErrorException(CustomInternalServerException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Ошибка базы данных"
+    status_code = status.HTTP_409_CONFLICT
+    detail = "Нарушение целостности данных: такой ресурс уже существует или недопустим"
 
 
 class OsErrorException(CustomInternalServerException):
