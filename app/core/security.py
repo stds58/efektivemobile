@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import jwt
 from passlib.context import CryptContext
-from passlib.exc import UnknownHashError
+from passlib.exc import UnknownHashError, PasswordSizeError
 from app.core.config import settings
 from app.exceptions.base import VerifyHashError
 
@@ -17,7 +17,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    try:
+        return pwd_context.hash(password)
+    except (TypeError, ValueError, PasswordSizeError) as exc:
+        raise VerifyHashError from exc
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:

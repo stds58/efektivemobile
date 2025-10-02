@@ -69,8 +69,9 @@ async def update_user(
 ):
     filters_dict = filters.model_dump(exclude_unset=True)
     password = filters_dict.get("password")
-    password_hash = get_password_hash(password)
-    filters_dict["password"] = password_hash
+    if password is not None:
+        password_hash = get_password_hash(password)
+        filters_dict["password"] = password_hash
 
     if "update_all_permission" in access.permissions:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
