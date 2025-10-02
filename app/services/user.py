@@ -30,27 +30,25 @@ async def find_many_user(
         session: AsyncSession,
         pagination: PaginationParams
 ) -> Optional[User]:
+    users = await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
     if "read_all_permission" in access.permissions:
-        users = await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
-    elif "read_permission" in access.permissions:
+        return users
+    if "read_permission" in access.permissions:
         if filters.id is not None and filters.id != access.user_id:
             raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
         filters.id = access.user_id
-        users = await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
-    else:
-        raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
-    return users
+        return users
+    raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
 async def get_user_by_id(access: AccessContext, user_id: UUID, session: AsyncSession) -> Optional[User]:
     filter_obj = SchemaUserFilter(id=user_id)
+    user = await UserDAO.find_one(filters=filter_obj, session=session)
     if "read_all_permission" in access.permissions:
-        user = await UserDAO.find_one(filters=filter_obj, session=session)
-    elif "read_permission" in access.permissions and user_id == access.user_id:
-        user = await UserDAO.find_one(filters=filter_obj, session=session)
-    else:
-        raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
-    return user
+        return user
+    if "read_permission" in access.permissions and user_id == access.user_id:
+        return user
+    raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
 async def get_user_by_email(access: AccessContext, email: str, session: AsyncSession) -> Optional[User]:
@@ -93,12 +91,11 @@ async def soft_delete_user(
     filters_dict = {"id": user_id, "is_active": False}
     if "delete_all_permission" in access.permissions:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-    elif "delete_permission" in access.permissions and user_id == access.user_id:
+        return
+    if "delete_permission" in access.permissions and user_id == access.user_id:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-    else:
-        raise PermissionDenied(custom_detail="Missing delete or delete_all permission on user")
-
-    return
+        return
+    raise PermissionDenied(custom_detail="Missing delete or delete_all permission on user")
 
 
 async def create_user(user_in: SchemaUserCreate,session: AsyncSession):
