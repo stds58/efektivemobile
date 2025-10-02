@@ -7,12 +7,10 @@ from app.models.base import (
     StrNullFalse,
     StrNullTrue,
     BoolDefTrue,
-    BoolDefFalse,
 )
 from app.models.role import Role
 
 
-# Связующая таблица для связи "многие-ко-многим" между пользователями и ролями
 user_role_association = Table(
     "user_roles",
     Base.metadata,
@@ -27,9 +25,6 @@ class User(Base):
     first_name: Mapped[StrNullTrue]
     last_name: Mapped[StrNullTrue]
     is_active: Mapped[BoolDefTrue]
-    is_user: Mapped[BoolDefTrue]
-    is_manager: Mapped[BoolDefFalse]
-    is_admin: Mapped[BoolDefFalse]
 
     roles: Mapped[List["Role"]] = relationship(
         "Role",
@@ -39,7 +34,7 @@ class User(Base):
     )
 
     def __str__(self):
-        return f"<{self.__class__.__name__} (id={self.id}, name={self.email!r})>"
+        return f"<{self.__class__.__name__} (id={self.id}, email={self.email!r})>"
 
     def __repr__(self):
         return f"<{self.__class__.__name__} (id={self.id}, email={self.email})>"

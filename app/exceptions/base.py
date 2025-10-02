@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from typing import Callable, Optional
 import socket
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -8,16 +8,14 @@ from fastapi.responses import JSONResponse, RedirectResponse
 logger = logging.getLogger(__name__)
 
 
-class CustomException(Exception): ...
-
-
 class CustomHTTPException(HTTPException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    detail = None
-    log_func: Callable = logging.info
+    detail: str = "Internal server error"
+    log_func: Callable = logging.error
 
-    def __init__(self) -> None:
-        super().__init__(status_code=self.status_code, detail=self.detail)
+    def __init__(self, custom_detail: Optional[str] = None) -> None:
+        final_detail = custom_detail if custom_detail is not None else self.detail
+        super().__init__(status_code=self.status_code, detail=final_detail)
 
     async def __call__(self, request: Request, exception: Exception) -> JSONResponse:
         self.log_func("%s: %s", self.detail, exception)
@@ -42,17 +40,17 @@ class HttpExceptionHandler(Exception):
 
 
 class BadCredentialsError(CustomHTTPException):
-    status_code = status.HTTP_404_NOT_FOUND
+    status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Invalid credentials"
 
 
 class EmailAlreadyRegisteredError(CustomHTTPException):
-    status_code = status.HTTP_404_NOT_FOUND
-    detail = "Check your inbox — if an account exists, you’ll receive an email"
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Check your inbox - if an account exists, you’ll receive an email"
 
 
 class UserInactiveError(CustomHTTPException):
-    status_code = status.HTTP_404_NOT_FOUND
+    status_code = status.HTTP_403_FORBIDDEN
     detail = "Check your inbox for activate"
 
 
@@ -66,6 +64,26 @@ class TokenExpiredError(CustomHTTPException):
     detail = "Token has expired"
 
 
+class PermissionDenied(CustomHTTPException):
+    status_code = status.HTTP_403_FORBIDDEN
+    detail = "Permission denied"
+
+
+class VerifyHashError(CustomHTTPException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Invalid email or password"
+
+
+class MultipleResultsError(CustomHTTPException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Multiple rows were found when one or none was required"
+
+
+class PasswordMismatchError(CustomHTTPException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Password and confirmation do not match"
+
+
 class CustomNotFoundException(CustomHTTPException):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "Ресурс не найден"
@@ -75,15 +93,6 @@ class CustomBadRequestException(CustomHTTPException):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "Неверный запрос"
 
-
-class CustomInternalServerException(CustomHTTPException):
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    detail = "Внутренняя ошибка сервера"
-    log_func = logger.error
-
-
-class IdentityProviderException(CustomInternalServerException):
-    detail = "Не удалось проверить доступ"
 
 
 class TokenExpiredException(CustomHTTPException):
@@ -101,14 +110,25 @@ class ForbiddenException(CustomHTTPException):
     detail = "Доступ запрещен"
 
 
-class IncorrectEmailOrPasswordException(CustomHTTPException):
-    status_code = status.HTTP_401_UNAUTHORIZED
-    detail = "Неверный email или пароль"
+# class IncorrectEmailOrPasswordException(CustomHTTPException):
+#     status_code = status.HTTP_401_UNAUTHORIZED
+#     detail = "Неверный email или пароль"
 
 
-class UserAlreadyExistsError(CustomHTTPException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Пользователь с таким email уже существует"
+# class UserAlreadyExistsError(CustomHTTPException):
+#     status_code = status.HTTP_400_BAD_REQUEST
+#     detail = "Пользователь с таким email уже существует"
+
+
+
+class CustomInternalServerException(CustomHTTPException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Внутренняя ошибка сервера"
+    log_func = logger.error
+
+
+class IdentityProviderException(CustomInternalServerException):
+    detail = "Не удалось проверить доступ"
 
 
 class RedisConnectionException(CustomInternalServerException):
@@ -141,9 +161,14 @@ class ValueErrorException(CustomInternalServerException):
     detail = "Ошибка сериализации данных"
 
 
+class MissingLoginCredentialsException(CustomInternalServerException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Either email or username must be provided"
+
+
 class IntegrityErrorException(CustomInternalServerException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Ошибка базы данных"
+    status_code = status.HTTP_409_CONFLICT
+    detail = "Нарушение целостности данных: такой ресурс уже существует или недопустим"
 
 
 class OsErrorException(CustomInternalServerException):

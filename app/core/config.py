@@ -2,7 +2,6 @@
 Класс настроек приложения
 """
 import secrets
-from cachetools import TTLCache
 from functools import lru_cache
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
@@ -18,6 +17,7 @@ class Settings(BaseSettings):
     """
 
     APP_NAME: str
+    ENVIRONMENT: str
     DEBUG: bool
     SECRET_KEY: str = Field(default_factory=lambda: Settings._generate_secret_key())
     SESSION_MIDDLEWARE_SECRET_KEY: str
