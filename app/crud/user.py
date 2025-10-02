@@ -1,15 +1,14 @@
 # pylint: disable=not-callable
 from typing import Optional, List
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from app.models import Role
-from app.models.user import User
-from app.core.security import get_password_hash
-from app.schemas.user import SchemaUserCreate, SchemaUserPatch, SchemaUserBase, SchemaUserFilter
-from app.crud.base import CRUDBase
+from app.models import Role, AccessRule, BusinessElement
+from app.models.user import User, user_role_association
+from app.schemas.user import SchemaUserPatch, SchemaUserBase, SchemaUserFilter, UserHashPassword
+from app.schemas.permission import SchemaPermissionBase
 from app.crud.base import BaseDAO
-
 
 
 class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
@@ -20,58 +19,44 @@ class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
 
     #_exclude_from_filter_by = {"id"}
 
+    @classmethod
+    async def get_with_roles(cls, session: AsyncSession, user_id: int) -> Optional[User]:
+        query = select(cls.model).where(cls.model.id == user_id).options(selectinload(cls.model.roles))
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
 
-
-class CRUDUser(CRUDBase[User]):
-    async def get_by_email(self, db: AsyncSession, *, email: str) -> Optional[User]:
-        result = await db.execute(select(User).where(User.email == email))
-        return result.scalars().first()
-
-    async def get_user_roles(self, db: AsyncSession, *, user_id: int) -> List[Role]:
-        result = await db.execute(
-            select(User)
-            .where(User.id == user_id)
-            .options(selectinload(User.roles))
+    @classmethod
+    async def get_with_permissions(
+            cls,
+            user_id: UUID,
+            business_element_name: str,
+            session: AsyncSession
+    ) -> List[str]:
+        query = (
+            select(AccessRule)
+            .join(AccessRule.element)
+            .join(Role, AccessRule.role_id == Role.id)
+            .join(user_role_association, Role.id == user_role_association.c.role_id)
+            .where(
+                user_role_association.c.user_id == user_id,
+                BusinessElement.name == business_element_name
+            )
         )
-        user = result.scalar_one_or_none()
-        return user.roles if user else []
+        result = await session.execute(query)
+        access_rules = result.scalars().all()
 
-    async def create(self, db: AsyncSession, *, obj_in: SchemaUserCreate) -> User:
-        db_obj = User(
-            email=obj_in.email,
-            password=get_password_hash(obj_in.password),
-            first_name=obj_in.first_name,
-            last_name=obj_in.last_name,
-            is_active=True,
-        )
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
+        aggregated: SchemaPermissionBase = SchemaPermissionBase()
+        for rule in access_rules:
+            for field_name in aggregated.model_fields:
+                if getattr(rule, field_name, False):
+                    setattr(aggregated, field_name, True)
 
-    async def update(
-        self, db: AsyncSession, *, db_obj: User, obj_in: SchemaUserPatch
-    ) -> User:
-        update_data = obj_in.dict(exclude_unset=True)
-        if "password" in update_data and update_data["password"]:
-            update_data["password"] = get_password_hash(update_data.pop("password"))
-        for field in update_data:
-            setattr(db_obj, field, update_data[field])
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
-
-    async def soft_delete(self, db: AsyncSession, *, obj_id: str) -> bool:
-        db_user = await self.get(db, obj_id)
-        if not db_user:
-            return False
-        db_user.is_active = False
-        db.add(db_user)
-        await db.commit()
-        return True
+        return aggregated.to_permission_list()
 
 
 
-# Экземпляр для использования в сервисах
-user = CRUDUser(User)
+class UserPasswordDAO(BaseDAO[User, None, SchemaUserFilter]):
+    model = User
+    create_schema = None
+    filter_schema = SchemaUserFilter
+    pydantic_model = UserHashPassword

@@ -1,9 +1,6 @@
-from typing import ClassVar, Dict, Generic, List, Optional, TypeVar, Type, Any
-from fastapi import status
+from typing import ClassVar, Dict, Generic, List, Optional, TypeVar
 from pydantic import BaseModel as PydanticModel
 from sqlalchemy import and_, select, update
-from sqlalchemy import delete as sqlalchemy_delete
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
@@ -94,17 +91,19 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
             cls,
             session: AsyncSession,
             filters: Optional[FilterSchemaType] = None
-    ) -> PydanticModel:
+    ) -> Optional[PydanticModel]:
         query = select(cls.model)
         if filters is not None:
             query = cls._apply_filters(query, filters)
 
         result = await session.execute(query)
         try:
-            result = result.unique().scalars().one_or_none()
-        except MultipleResultsFound:
-            raise MultipleResultsError
-        return result
+            obj = result.unique().scalars().one_or_none()
+        except MultipleResultsFound as exc:
+            raise MultipleResultsError from exc
+        if obj is None:
+            return None
+        return cls.pydantic_model.model_validate(obj, from_attributes=True)
 
     @classmethod
     async def add_one(cls, session: AsyncSession, values: Dict) -> ModelType:
@@ -147,47 +146,3 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         stmt = update(cls.model).where(cls.model.id == model_id).values(values)
         await session.execute(stmt)
         await session.commit()
-
-
-
-# pylint: disable-next=no-name-in-module,invalid-name
-CrudModelType = TypeVar("CrudModelType", bound=Base)
-
-
-class CRUDBase(Generic[CrudModelType]):
-    def __init__(self, model: Type[CrudModelType]):
-        self.model = model
-
-    async def get(self, db: AsyncSession, obj_id: Any) -> Optional[CrudModelType]:
-        result = await db.execute(select(self.model).where(self.model.id == obj_id))
-        return result.scalars().first()
-
-    async def get_multi(
-        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
-    ) -> list[CrudModelType]:
-        result = await db.execute(select(self.model).offset(skip).limit(limit))
-        return result.scalars().all()
-
-    async def create(self, db: AsyncSession, *, obj_in) -> CrudModelType:
-        db_obj = self.model(**obj_in.dict())
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
-
-    async def update(
-        self, db: AsyncSession, *, db_obj: CrudModelType, obj_in
-    ) -> CrudModelType:
-        update_data = obj_in.dict(exclude_unset=True)
-        for field in update_data:
-            setattr(db_obj, field, update_data[field])
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
-
-    async def remove(self, db: AsyncSession, *, obj_id: Any) -> CrudModelType:
-        obj = await self.get(db, obj_id)
-        await db.delete(obj)
-        await db.commit()
-        return obj

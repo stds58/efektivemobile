@@ -30,27 +30,27 @@ def connection(isolation_level: Optional[str] = None, commit: bool = True):
                 yield session
                 if commit and session.in_transaction():
                     await session.commit()
-            except IntegrityError as e:
-                logger.critical("IntegrityError: %s", e)
+            except IntegrityError as exc:
+                logger.critical("IntegrityError: %s", exc)
                 if session.in_transaction():
                     await session.rollback()
                 await session.rollback()
-                raise IntegrityErrorException
-            except OperationalError as e:
-                logger.critical("OperationalError: %s", e)
-                raise CustomInternalServerException
-            except (ConnectionRefusedError, OSError) as e:
-                logger.critical("ConnectionRefusedError, OSError: %s", e)
-                raise CustomInternalServerException
-            except SQLAlchemyError as e:
-                print("SQLAlchemyError", e)
-                logger.critical(" SQLAlchemyError: %s", e)
+                raise IntegrityErrorException from exc
+            except OperationalError as exc:
+                logger.critical("OperationalError: %s", exc)
+                raise CustomInternalServerException from exc
+            except (ConnectionRefusedError, OSError) as exc:
+                logger.critical("ConnectionRefusedError, OSError: %s", exc)
+                raise CustomInternalServerException from exc
+            except SQLAlchemyError as exc:
+                print("SQLAlchemyError", exc)
+                logger.critical(" SQLAlchemyError: %s", exc)
                 if session.in_transaction():
                     await session.rollback()
-                raise e
-            except Exception as e:
-                print("Exception", e)
-                logger.critical(" Exception: %s", e)
+                raise exc
+            except Exception as exc:
+                print("Exception", exc)
+                logger.critical(" Exception: %s", exc)
                 if session.in_transaction():
                     await session.rollback()
                 raise

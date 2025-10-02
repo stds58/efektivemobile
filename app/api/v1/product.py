@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.get_db import connection
 from app.schemas.product import SchemaProductBase, SchemaProductCreate, SchemaProductFilter

@@ -2,7 +2,6 @@
 Класс настроек приложения
 """
 import secrets
-from cachetools import TTLCache
 from functools import lru_cache
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings

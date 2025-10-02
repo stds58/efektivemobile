@@ -161,6 +161,11 @@ class ValueErrorException(CustomInternalServerException):
     detail = "Ошибка сериализации данных"
 
 
+class MissingLoginCredentialsException(CustomInternalServerException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Either email or username must be provided"
+
+
 class IntegrityErrorException(CustomInternalServerException):
     status_code = status.HTTP_409_CONFLICT
     detail = "Нарушение целостности данных: такой ресурс уже существует или недопустим"

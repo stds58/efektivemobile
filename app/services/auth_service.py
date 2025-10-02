@@ -17,8 +17,8 @@ class AuthService:
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         try:
             return pwd_context.verify(plain_password, hashed_password)
-        except UnknownHashError:
-            raise VerifyHashError
+        except UnknownHashError as exc:
+            raise VerifyHashError from exc
 
     @staticmethod
     def get_password_hash(password: str) -> str:
@@ -45,8 +45,8 @@ class AuthService:
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
             return payload
-        except jwt.PyJWTError:
-            raise TokenExpiredError
+        except jwt.PyJWTError as exc:
+            raise TokenExpiredError from exc
 
     @staticmethod
     def ban_token(token: str):
