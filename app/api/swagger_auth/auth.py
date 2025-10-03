@@ -22,7 +22,5 @@ async def swaggerlogin_for_access_token(
 
 @swagger_router.post("/logout")
 async def logout(token: str = Depends(oauth2_scheme)) -> dict:
-    # JWT токены stateless. Выход реализуется на клиенте путем удаления токена.
-    # На сервере можно добавить токен в черный список, если реализована такая логика.
     AuthService.ban_token(token)
     return {"message": "You have been logged out"}

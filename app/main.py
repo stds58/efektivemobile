@@ -38,12 +38,9 @@ app.add_middleware(
     allow_methods=[
         "GET",
         "POST",
-        "PUT",
         "DELETE",
         "PATCH",
-        "OPTIONS",
     ],
-    # добавить X-Requested-With если нужна совместимость с jQuery / устаревшими клиентами
     allow_headers=[
         "Content-Type",
         "Authorization",
