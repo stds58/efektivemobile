@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.get_db import connection
 from app.schemas.product import SchemaProductBase, SchemaProductCreate, SchemaProductFilter, SchemaProductPatch
@@ -8,11 +8,10 @@ from app.dependencies.permissions import require_permission
 from app.schemas.permission import AccessContext
 
 
-
 router = APIRouter()
 
 
-@router.get("/product", summary="Get products")
+@router.get("", summary="Get products")
 async def get_products(
         filters: SchemaProductFilter = Depends(),
         session: AsyncSession = Depends(connection()),
@@ -40,3 +39,13 @@ async def edit_product(
 ):
     updated_product = await update_one_product(access=access, data=data, session=session, product_id=product_id)
     return updated_product
+
+
+@router.delete("/{id}", summary="Delete product", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_product(
+        product_id: UUID,
+        session: AsyncSession = Depends(connection()),
+        access: AccessContext = Depends(require_permission("product")),
+):
+    await delete_one_product(access=access, session=session, product_id=product_id)
+    return

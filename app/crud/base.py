@@ -115,9 +115,9 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         return new_instance
 
     @classmethod
-    async def delete_one_by_id(cls, session: AsyncSession, obj_id) -> Optional[ModelType]:
+    async def delete_one_by_id(cls, session: AsyncSession, model_id: UUID) -> Optional[ModelType]:
         """Удаляет запись по id. Возвращает удалённый объект"""
-        obj = await session.get(cls.model, obj_id)
+        obj = await session.get(cls.model, model_id)
 
         if obj is None:
             raise ObjectsNotFoundByIDError
@@ -138,7 +138,7 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         return result.rowcount
 
     @classmethod
-    async def update_one(cls, model_id: int, values: Dict, session: AsyncSession) -> None:
+    async def update_one(cls, model_id: UUID, values: Dict, session: AsyncSession) -> None:
         stmt = update(cls.model).where(cls.model.id == model_id).values(values)
         await session.execute(stmt)
         await session.commit()

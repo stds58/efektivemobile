@@ -153,12 +153,12 @@ class MissingLoginCredentialsException(CustomInternalServerException):
 
 class IntegrityErrorException(CustomInternalServerException):
     status_code = status.HTTP_409_CONFLICT
-    detail = "Нарушение целостности данных: такой ресурс уже существует или недопустим"
+    detail = "Нарушение целостности данных"
 
 
 class ObjectsNotFoundByIDError(CustomInternalServerException):
     status_code = status.HTTP_404_NOT_FOUND
-    detail = "Нарушение целостности данных: такой ресурс уже существует или недопустим"
+    detail = "Запрашиваемый объект не найден"
 
 
 class OsErrorException(CustomInternalServerException):

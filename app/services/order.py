@@ -17,7 +17,6 @@ async def find_many_order(
     if "read_permission" in access.permissions:
         if filters.user_id is not None and filters.user_id != access.user_id:
             raise PermissionDenied(custom_detail="Missing read or read_all permission on order")
-
         filters.user_id = access.user_id
         return await OrderDAO.find_many(filters=filters, session=session)
 
@@ -31,6 +30,7 @@ async def add_one_order(
 ):
     if "create_permission" in access.permissions:
         values_dict = data.model_dump(exclude_unset=True)
+        values_dict["user_id"] = access.user_id
         return await OrderDAO.add_one(session=session, values=values_dict)
 
     raise PermissionDenied(custom_detail="Missing create permission on order")

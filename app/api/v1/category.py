@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.get_db import connection
 from app.schemas.category import SchemaCategoryBase, SchemaCategoryCreate, SchemaCategoryFilter, SchemaCategoryPatch
@@ -12,7 +12,7 @@ from app.schemas.permission import AccessContext
 router = APIRouter()
 
 
-@router.get("/category", summary="Get categorys")
+@router.get("", summary="Get categorys")
 async def get_categorys(
         filters: SchemaCategoryFilter = Depends(),
         session: AsyncSession = Depends(connection()),
@@ -32,7 +32,7 @@ async def create_category(
 
 
 @router.patch("/{id}", summary="Update category", response_model=SchemaCategoryBase)
-async def edit_product(
+async def edit_category(
         category_id: UUID,
         data: SchemaCategoryPatch,
         session: AsyncSession = Depends(connection()),
@@ -40,3 +40,13 @@ async def edit_product(
 ):
     updated_category = await update_one_category(access=access, data=data, session=session, category_id=category_id)
     return updated_category
+
+
+@router.delete("/{id}", summary="Delete category", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category(
+        category_id: UUID,
+        session: AsyncSession = Depends(connection()),
+        access: AccessContext = Depends(require_permission("category")),
+):
+    await delete_one_category(access=access, session=session, category_id=category_id)
+    return

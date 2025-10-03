@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, BoolDefFalse
 
@@ -7,6 +7,7 @@ from .base import Base, BoolDefFalse
 class Order(Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
     product_id: Mapped[UUID] = mapped_column(ForeignKey("product.id"))
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     is_paid: Mapped[BoolDefFalse]
 
     users: Mapped["User"] = relationship("User", back_populates="orders")

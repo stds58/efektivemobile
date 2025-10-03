@@ -20,7 +20,7 @@ class SchemaProductCreate(BaseModel):
 
 
 class SchemaProductFilter(BaseModel):
-    category_id: UUID
+    category_id: Optional[UUID] = None
     name: Optional[str] = None
     price: Optional[int] = None
     created_at: Optional[datetime] = None
