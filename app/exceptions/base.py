@@ -131,21 +131,6 @@ class IdentityProviderException(CustomInternalServerException):
     detail = "Не удалось проверить доступ"
 
 
-class RedisConnectionException(CustomInternalServerException):
-    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    detail = "Сервис кэша временно недоступен. Попробуйте позже"
-
-
-class RedisPermissionException(CustomInternalServerException):
-    status_code = status.HTTP_403_FORBIDDEN
-    detail = "Нет прав для доступа к данным в Redis"
-
-
-class RedisTimeoutException(CustomInternalServerException):
-    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    detail = "Сервис кэша не отвечает"
-
-
 class DatabaseConnectionException(CustomInternalServerException):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     detail = "Сервис базы данных временно недоступен"
@@ -168,6 +153,11 @@ class MissingLoginCredentialsException(CustomInternalServerException):
 
 class IntegrityErrorException(CustomInternalServerException):
     status_code = status.HTTP_409_CONFLICT
+    detail = "Нарушение целостности данных: такой ресурс уже существует или недопустим"
+
+
+class ObjectsNotFoundByIDError(CustomInternalServerException):
+    status_code = status.HTTP_404_NOT_FOUND
     detail = "Нарушение целостности данных: такой ресурс уже существует или недопустим"
 
 

@@ -76,7 +76,7 @@ async def seed_users(session: AsyncSession):
             password=get_password_hash(user_data["password"]),
             first_name=user_data["first_name"],
             last_name=user_data["last_name"],
-            is_admin=user_data.get("is_admin", False),
+            is_active=user_data.get("is_active", True),
         )
         user.roles = [roles[name] for name in user_data["role_names"]]
         session.add(user)

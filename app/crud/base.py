@@ -1,13 +1,13 @@
 from typing import ClassVar, Dict, Generic, List, Optional, TypeVar
+from uuid import UUID
 from pydantic import BaseModel as PydanticModel
-from sqlalchemy import and_, select, update
+from sqlalchemy import and_, select, update, delete
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from app.models.base import Base
 from app.schemas.base import PaginationParams
-from app.exceptions.base import MultipleResultsError
-
+from app.exceptions.base import MultipleResultsError, ObjectsNotFoundByIDError, ObjectsNotFoundByIDError
 
 assert issubclass(Base, DeclarativeBase)
 
@@ -107,42 +107,40 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
 
     @classmethod
     async def add_one(cls, session: AsyncSession, values: Dict) -> ModelType:
+        """добавляет 1 запись"""
         new_instance = cls.model(**values)
         session.add(new_instance)
         await session.flush()
         await session.refresh(new_instance)
         return new_instance
 
-    # @classmethod
-    # async def add_many(cls, session: AsyncSession, values_list: List[Dict]) -> None:
-    #     stmt = insert(cls.model).values(values_list)
-    #     stmt = stmt.on_conflict_do_nothing()
-    #     await session.execute(stmt)
-    #     await session.flush()
-    #     await session.commit()
+    @classmethod
+    async def delete_one_by_id(cls, session: AsyncSession, obj_id) -> Optional[ModelType]:
+        """Удаляет запись по id. Возвращает удалённый объект"""
+        obj = await session.get(cls.model, obj_id)
 
-    # @classmethod
-    # async def delete_all(cls, session: AsyncSession) -> dict:
-    #     query = sqlalchemy_delete(cls.model)
-    #     result = await session.execute(query)
-    #     return {
-    #         "status": "success",
-    #         "message": f"{result.rowcount} записей удалено",
-    #         "deleted_count": result.rowcount,
-    #         "http_status": status.HTTP_200_OK,
-    #     }
+        if obj is None:
+            raise ObjectsNotFoundByIDError
 
-    # @classmethod
-    # async def find_items_since(cls, last_id: int, session: AsyncSession):
-    #     result = await session.execute(
-    #         select(cls.model).where(cls.model.id > last_id).order_by(cls.model.id)
-    #     )
-    #     return result.scalars().all()
+        await session.delete(obj)
+        await session.commit()
+        return True
 
     @classmethod
-    async def update_one(
-        cls, model_id: int, values: Dict, session: AsyncSession
-    ) -> None:
+    async def delete_many_by_ids(cls, session: AsyncSession, ids: List[UUID]) -> dict:
+        """Удаляет записи по списку ID. Возвращает количество удалённых строк"""
+        if not ids:
+            raise ObjectsNotFoundByIDError
+
+        stmt = delete(cls.model).where(cls.model.id.in_(ids))
+        result = await session.execute(stmt)
+        await session.commit()
+        return result.rowcount
+
+    @classmethod
+    async def update_one(cls, model_id: int, values: Dict, session: AsyncSession) -> None:
         stmt = update(cls.model).where(cls.model.id == model_id).values(values)
         await session.execute(stmt)
         await session.commit()
+        obj = await session.get(cls.model, model_id)
+        return obj
