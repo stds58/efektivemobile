@@ -1,6 +1,8 @@
 from typing import Optional, List
 from uuid import UUID, uuid4
+from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import User
 from app.crud.user import UserDAO, UserPasswordDAO
@@ -12,6 +14,8 @@ from app.schemas.user import (
     SchemaUserPatch,
     SchemaUserFilter,
     SchemaUserLogin,
+    SchemaUserSwaggerLogin,
+    SchemaUserLoginMain,
     UserHashPassword
 )
 from app.services.auth_service import AuthService
@@ -129,7 +133,32 @@ async def get_user_roles(user_id: UUID, session: AsyncSession) -> List[str]:
     return [role.name for role in user.roles]
 
 
-async def authenticate_user(user_in:SchemaUserLogin, session: AsyncSession) -> Token:
+async def set_token_in_cookie(response: Response, tokens: Token):
+    response.set_cookie(
+        key="users_access_token",
+        value=tokens.access_token,
+        httponly=True,
+        secure=False,
+        domain=None,
+        path="/",
+        samesite="strict",
+        max_age=60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    )
+
+    response.set_cookie(
+        key="users_refresh_token",
+        value=tokens.refresh_token,
+        httponly=True,
+        secure=False,  # settings.SECURE_COOKIES
+        domain=None,
+        path="/",
+        samesite="strict",
+        max_age=60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
+    )
+    return
+
+
+async def authenticate_user(user_in: SchemaUserLoginMain, session: AsyncSession) -> Token:
     login = user_in.email if user_in.username is None else user_in.username
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
@@ -146,5 +175,48 @@ async def authenticate_user(user_in:SchemaUserLogin, session: AsyncSession) -> T
 
     role_names = await get_user_roles(user_id=user.id, session=session)
     access_token = AuthService.create_access_token(data={"sub": str(user.id), "role": role_names})
+    refresh_token = AuthService.create_refresh_token({"sub": str(user.id)})
 
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=access_token, refresh_token=refresh_token)
+
+
+async def authenticate_user_api(user_in:SchemaUserLogin, session: AsyncSession) -> Token:
+    user = SchemaUserLoginMain(email=user_in.email, password=user_in.password)
+    return await authenticate_user(user_in=user, session=session)
+
+
+async def authenticate_user_swagger(user_in:SchemaUserSwaggerLogin, session: AsyncSession) -> Token:
+    user = SchemaUserSwaggerLogin(username=user_in.username, password=user_in.password)
+    return await authenticate_user(user_in=user, session=session)
+
+
+
+#from app.exceptions.base import UserNotFoundError, UserInactiveError
+async def refresh_user_tokens(
+        refresh_token: str,
+        session: AsyncSession
+) -> Token:
+    # 1. Декодируем refresh-токен через AuthService
+    payload = AuthService.decode_refresh_token(refresh_token)
+    user_id = payload.get("sub")
+    if not user_id:
+        raise 'TokenExpiredError(detail="Invalid refresh token")'
+
+    # 2. Проверяем, что пользователь существует и активен
+    fake_uuid = uuid4()
+    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
+    user = await get_user_by_id(access=access, user_id=UUID(user_id), session=session)
+
+    if not user:
+        raise 'UserNotFoundError'
+    if not user.is_active:
+        raise UserInactiveError
+
+    # 3. Генерируем новые токены
+    new_access = AuthService.create_access_token({"sub": str(user.id)})
+    new_refresh = AuthService.create_refresh_token({"sub": str(user.id)})
+
+    # 4. Опционально: добавить старый refresh токен в чёрный список (для ротации)
+    AuthService.ban_token(refresh_token)
+
+    return Token(access_token=new_access, refresh_token=new_refresh)

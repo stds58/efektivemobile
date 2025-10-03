@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.token import Token
 from app.services.auth_service import AuthService
-from app.services.user import authenticate_user
+from app.services.user import authenticate_user_swagger
 from app.dependencies.get_db import connection
 
 
@@ -17,7 +17,7 @@ async def swaggerlogin_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(connection()),
 ) -> Token:
-    return await authenticate_user(user_in=form_data, session=session)
+    return await authenticate_user_swagger(user_in=form_data, session=session)
 
 
 @swagger_router.post("/logout")
