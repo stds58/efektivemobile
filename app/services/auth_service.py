@@ -1,29 +1,22 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import jwt
-from passlib.context import CryptContext
-from passlib.exc import UnknownHashError
 from app.core.config import settings
+from app.core.security import verify_password, get_password_hash
 from app.exceptions.base import BlacklistedError, TokenExpiredError
 from app.core.blacklist import token_blacklist
 from app.exceptions.base import VerifyHashError
 from app.schemas.token import Token
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 class AuthService:
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        try:
-            return pwd_context.verify(plain_password, hashed_password)
-        except UnknownHashError as exc:
-            raise VerifyHashError from exc
+        return verify_password(plain_password, hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
-        return pwd_context.hash(password)
+        return get_password_hash(password)
 
     @staticmethod
     def create_access_token(data: dict) -> str:
