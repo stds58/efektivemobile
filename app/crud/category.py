@@ -1,6 +1,10 @@
 from app.crud.base import BaseDAO
 from app.models.category import Category
-from app.schemas.category import SchemaCategoryBase, SchemaCategoryCreate, SchemaCategoryFilter
+from app.schemas.category import (
+    SchemaCategoryBase,
+    SchemaCategoryCreate,
+    SchemaCategoryFilter,
+)
 
 
 class CategoryDAO(BaseDAO[Category, SchemaCategoryCreate, SchemaCategoryFilter]):
