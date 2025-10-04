@@ -245,57 +245,16 @@ CATEGORY_DATA = [
 ]
 
 PRODUCT_DATA = [
-    {
-        "category": "канцелярия",
-        "name": "бумага",
-        "price": 100
-    },
-    {
-        "category": "канцелярия",
-        "name": "кнопки",
-        "price": 150
-    },
-    {
-        "category": "транспорт",
-        "name": "колесо",
-        "price": 250
-    },
-    {
-        "category": "транспорт",
-        "name": "шина",
-        "price": 200
-    },
-    {
-        "category": "дом",
-        "name": "ведро",
-        "price": 100
-    },
-    {
-        "category": "дом",
-        "name": "горшок",
-        "price": 100
-    },
+    {"category": "канцелярия", "name": "бумага", "price": 100},
+    {"category": "канцелярия", "name": "кнопки", "price": 150},
+    {"category": "транспорт", "name": "колесо", "price": 250},
+    {"category": "транспорт", "name": "шина", "price": 200},
+    {"category": "дом", "name": "ведро", "price": 100},
+    {"category": "дом", "name": "горшок", "price": 100},
 ]
 
 ORDER_DATA = [
-    {
-        "user":"admin@example.com",
-        "product":"ведро",
-        "quantity": 5,
-        "is_paid": False
-    },
-    {
-        "user": "admin@example.com",
-        "product": "шина",
-        "quantity": 15,
-        "is_paid": False
-    },
-    {
-        "user": "user@example.com",
-        "product": "бумага",
-        "quantity": 10,
-        "is_paid": False
-    },
+    {"user": "admin@example.com", "product": "ведро", "quantity": 5, "is_paid": False},
+    {"user": "admin@example.com", "product": "шина", "quantity": 15, "is_paid": False},
+    {"user": "user@example.com", "product": "бумага", "quantity": 10, "is_paid": False},
 ]
-
-

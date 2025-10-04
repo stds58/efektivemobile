@@ -1,5 +1,6 @@
 from typing import Optional, AsyncGenerator
 import logging
+
 # from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,7 @@ from app.exceptions.base import (
     IntegrityErrorException,
     CustomInternalServerException,
     SqlalchemyErrorException,
-    DatabaseConnectionException
+    DatabaseConnectionException,
 )
 
 

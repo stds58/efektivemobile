@@ -1,13 +1,7 @@
 from typing import List
 from sqlalchemy import Table, Column, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, relationship
-from app.models.base import (
-    Base,
-    StrUniq,
-    StrNullFalse,
-    StrNullTrue,
-    BoolDefTrue,
-)
+from app.models.base import Base, StrUniq, StrNullFalse, StrNullTrue, BoolDefTrue
 from app.models.role import Role
 
 

@@ -7,7 +7,12 @@ from app.core.security import get_password_hash
 from app.models import User
 from app.crud.user import UserDAO, UserPasswordDAO
 from app.schemas.base import PaginationParams
-from app.schemas.permission import AccessContext
+from app.schemas.permission import (
+    AccessContext,
+    SchemaUserRolesBase,
+    SchemaUserRolesCreate,
+    SchemaUserRolesFilter,
+)
 from app.schemas.token import Token
 from app.schemas.user import (
     SchemaUserCreate,
@@ -231,3 +236,56 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
     AuthService.ban_token(refresh_token)
 
     return Token(access_token=new_access, refresh_token=new_refresh)
+
+
+async def add_role_to_user(
+    data: SchemaUserRolesCreate, access: AccessContext, session: AsyncSession
+) -> SchemaUserRolesBase:
+    if "create_permission" in access.permissions:
+        return await UserDAO.add_role_to_user(
+            session=session, user_id=data.user_id, role_id=data.role_id
+        )
+    raise PermissionDenied(custom_detail="Missing create_permission on user_roles")
+
+
+async def remove_role_from_user(
+    data: SchemaUserRolesCreate, access: AccessContext, session: AsyncSession
+) -> dict:
+    if "delete_all_permission" in access.permissions:
+        return await UserDAO.remove_role_from_user(
+            session=session, user_id=data.user_id, role_id=data.role_id
+        )
+
+    if "delete_permission" in access.permissions:
+        if access.user_id == data.user_id:
+            return await UserDAO.remove_role_from_user(
+                session=session, user_id=data.user_id, role_id=data.role_id
+            )
+        raise PermissionDenied(
+            custom_detail="Missing delete or delete_all permission on user_roles"
+        )
+
+    raise PermissionDenied(
+        custom_detail="Missing delete or delete_all permission on user_roles"
+    )
+
+
+async def get_all_user_roles(
+    filters: SchemaUserRolesFilter, access: AccessContext, session: AsyncSession
+) -> List[dict]:
+    if "read_all_permission" in access.permissions:
+        return await UserDAO.get_from_user_roles(
+            session=session, user_id=filters.user_id
+        )
+
+    if "read_permission" in access.permissions:
+        if filters.user_id is not None and filters.user_id != access.user_id:
+            raise PermissionDenied(
+                custom_detail="Missing read or read_all permission on user_roles"
+            )
+        filters.user_id = access.user_id
+        return UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
+
+    raise PermissionDenied(
+        custom_detail="Missing read or read_all permission on user_roles"
+    )

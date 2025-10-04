@@ -19,7 +19,9 @@ async_session_maker = create_session_factory(settings.DATABASE_URL)
 
 
 async def seed_roles(session: AsyncSession):
-    existing_names = {name async for name in await session.stream_scalars(select(Role.name))}
+    existing_names = {
+        name async for name in await session.stream_scalars(select(Role.name))
+    }
 
     for role_data in ROLES_DATA:
         if role_data["name"] not in existing_names:
@@ -28,7 +30,10 @@ async def seed_roles(session: AsyncSession):
 
 
 async def seed_business_elements(session: AsyncSession):
-    existing_names = {name async for name in await session.stream_scalars(select(BusinessElement.name))}
+    existing_names = {
+        name
+        async for name in await session.stream_scalars(select(BusinessElement.name))
+    }
 
     for business_element_data in BUSINESS_ELEMENTS_DATA:
         if business_element_data["name"] not in existing_names:
@@ -37,10 +42,17 @@ async def seed_business_elements(session: AsyncSession):
 
 
 async def seed_access_rules(session: AsyncSession):
-    roles = {role.name: role.id async for role in await session.stream_scalars(select(Role))}
-    elements = {element.name: element.id async for element in await session.stream_scalars(select(BusinessElement))}
+    roles = {
+        role.name: role.id async for role in await session.stream_scalars(select(Role))
+    }
+    elements = {
+        element.name: element.id
+        async for element in await session.stream_scalars(select(BusinessElement))
+    }
 
-    result = await session.execute(select(AccessRule.role_id, AccessRule.businesselement_id))
+    result = await session.execute(
+        select(AccessRule.role_id, AccessRule.businesselement_id)
+    )
     existing_pairs = {(row.role_id, row.businesselement_id) for row in result}
 
     for rule in ACCESS_RULES_DATA:
@@ -63,8 +75,12 @@ async def seed_access_rules(session: AsyncSession):
 
 
 async def seed_users(session: AsyncSession):
-    existing_emails = {email async for email in await session.stream_scalars(select(User.email))}
-    roles = {role.name: role async for role in await session.stream_scalars(select(Role))}
+    existing_emails = {
+        email async for email in await session.stream_scalars(select(User.email))
+    }
+    roles = {
+        role.name: role async for role in await session.stream_scalars(select(Role))
+    }
 
     for user_data in USERS_DATA:
         if user_data["email"] in existing_emails:
@@ -90,7 +106,9 @@ async def seed_users(session: AsyncSession):
 
 
 async def seed_categories(session: AsyncSession):
-    existing_names = {name async for name in await session.stream_scalars(select(Category.name))}
+    existing_names = {
+        name async for name in await session.stream_scalars(select(Category.name))
+    }
 
     for category_data in CATEGORY_DATA:
         if category_data["name"] not in existing_names:
@@ -99,8 +117,13 @@ async def seed_categories(session: AsyncSession):
 
 
 async def seed_products(session: AsyncSession):
-    categories = {category.name: category.id async for category in await session.stream_scalars(select(Category))}
-    existing_names = {name async for name in await session.stream_scalars(select(Product.name))}
+    categories = {
+        category.name: category.id
+        async for category in await session.stream_scalars(select(Category))
+    }
+    existing_names = {
+        name async for name in await session.stream_scalars(select(Product.name))
+    }
 
     for product_data in PRODUCT_DATA:
         if product_data["name"] in existing_names:
@@ -108,7 +131,9 @@ async def seed_products(session: AsyncSession):
 
         category_name = product_data["category"]
         if category_name not in categories:
-            raise ValueError(f"Категория '{category_name}' не найдена при импорте продукта '{product_data['name']}'")
+            raise ValueError(
+                f"Категория '{category_name}' не найдена при импорте продукта '{product_data['name']}'"
+            )
 
         product = Product(
             category_id=categories[category_name],
@@ -120,8 +145,13 @@ async def seed_products(session: AsyncSession):
 
 
 async def seed_orders(session: AsyncSession):
-    users = {user.email: user.id async for user in await session.stream_scalars(select(User))}
-    products = {product.name: product.id async for product in await session.stream_scalars(select(Product))}
+    users = {
+        user.email: user.id async for user in await session.stream_scalars(select(User))
+    }
+    products = {
+        product.name: product.id
+        async for product in await session.stream_scalars(select(Product))
+    }
 
     # Получаем уже существующие заказы как множество кортежей (user_id, product_id, quantity)
     result = await session.execute(
