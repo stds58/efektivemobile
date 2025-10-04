@@ -15,4 +15,3 @@ class Order(Base):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} (id={self.id}, user_id={self.user_id}, product_id={self.product_id})>"
-
