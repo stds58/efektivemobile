@@ -11,6 +11,7 @@ from fastapi import HTTPException as FastAPIHTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.exceptions.base import DatabaseConnectionException, CustomInternalServerException
 
 
 logging.basicConfig(level=logging.INFO)
@@ -40,12 +41,12 @@ async def get_session_with_isolation(
                 current_isolation_level = result.scalar()
                 logger.info("Текущий уровень изоляции: %s", current_isolation_level)
             yield session
-    except (FastAPIHTTPException, StarletteHTTPException) as e:
-        logger.error("Ошибка подключения к БД при создании сессии: %s", e)
-        raise
-    except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as e:
-        logger.error("Ошибка подключения к БД при создании сессии %s", e)
-        raise
-    except Exception as e:
-        logger.error("Неожиданная ошибка при создании сессии: %s", e)
-        raise
+    except (FastAPIHTTPException, StarletteHTTPException) as exc:
+        logger.error("Ошибка подключения к БД при создании сессии: %s", exc)
+        raise CustomInternalServerException from exc
+    except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as exc:
+        logger.error("Ошибка подключения к БД при создании сессии %s", exc)
+        raise DatabaseConnectionException from exc
+    except Exception as exc:
+        logger.error("Неожиданная ошибка при создании сессии: %s", exc)
+        raise CustomInternalServerException from exc

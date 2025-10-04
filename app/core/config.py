@@ -1,6 +1,7 @@
 """
 Класс настроек приложения
 """
+
 import secrets
 from functools import lru_cache
 from dotenv import load_dotenv
@@ -42,7 +43,6 @@ class Settings(BaseSettings):
     @staticmethod
     def _generate_secret_key() -> str:
         return secrets.token_urlsafe(64)
-
 
     model_config = ConfigDict(extra="ignore")
 

@@ -1,6 +1,5 @@
 import logging
 from typing import Callable, Optional
-import socket
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -22,20 +21,6 @@ class CustomHTTPException(HTTPException):
         return JSONResponse(
             content={"message": self.detail},
             status_code=self.status_code,
-        )
-
-
-class HttpExceptionHandler(Exception):
-    async def __call__(
-        self, request: Request, exception: HTTPException
-    ) -> JSONResponse | RedirectResponse:
-        if exception.headers and "Location" in exception.headers:
-            return RedirectResponse(
-                url=exception.headers["Location"], status_code=exception.status_code
-            )
-        return JSONResponse(
-            status_code=exception.status_code,
-            content={"error": exception.detail},
         )
 
 
@@ -84,66 +69,10 @@ class PasswordMismatchError(CustomHTTPException):
     detail = "Password and confirmation do not match"
 
 
-class CustomNotFoundException(CustomHTTPException):
-    status_code = status.HTTP_404_NOT_FOUND
-    detail = "Ресурс не найден"
-
-
-class CustomBadRequestException(CustomHTTPException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Неверный запрос"
-
-
-
-class TokenExpiredException(CustomHTTPException):
-    status_code = status.HTTP_401_UNAUTHORIZED
-    detail = "Токен истек"
-
-
-class NoUserIdException(CustomHTTPException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "Идентификатор пользователя отсутствуе"
-
-
-class ForbiddenException(CustomHTTPException):
-    status_code = status.HTTP_403_FORBIDDEN
-    detail = "Доступ запрещен"
-
-
-# class IncorrectEmailOrPasswordException(CustomHTTPException):
-#     status_code = status.HTTP_401_UNAUTHORIZED
-#     detail = "Неверный email или пароль"
-
-
-# class UserAlreadyExistsError(CustomHTTPException):
-#     status_code = status.HTTP_400_BAD_REQUEST
-#     detail = "Пользователь с таким email уже существует"
-
-
-
 class CustomInternalServerException(CustomHTTPException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Внутренняя ошибка сервера"
     log_func = logger.error
-
-
-class IdentityProviderException(CustomInternalServerException):
-    detail = "Не удалось проверить доступ"
-
-
-class DatabaseConnectionException(CustomInternalServerException):
-    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    detail = "Сервис базы данных временно недоступен"
-
-
-class TypeErrorException(CustomInternalServerException):
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    detail = "Ошибка обработки данных сервера"
-
-
-class ValueErrorException(CustomInternalServerException):
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    detail = "Ошибка сериализации данных"
 
 
 class MissingLoginCredentialsException(CustomInternalServerException):
@@ -161,30 +90,11 @@ class ObjectsNotFoundByIDError(CustomInternalServerException):
     detail = "Запрашиваемый объект не найден"
 
 
-class OsErrorException(CustomInternalServerException):
+class DatabaseConnectionException(CustomHTTPException):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-
-    async def __call__(self, request: Request, exception: Exception) -> JSONResponse:
-        if isinstance(exception, socket.gaierror):
-            self.detail = "Не удалось разрешить имя хоста"
-        else:
-            self.detail = "Системная ошибка ввода-вывода"
-        return await super().__call__(request, exception)
+    detail = "Сервис базы данных временно недоступен"
 
 
 class SqlalchemyErrorException(CustomInternalServerException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Ошибка базы данных"
-
-
-class SqlalchemyProgrammingException(CustomHTTPException):
-    async def __call__(self, request: Request, exception: Exception) -> JSONResponse:
-        if 'relation "' in str(exception) and "does not exist" in str(exception):
-            self.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-            self.detail = "База данных не инициализирована: отсутствует таблица. Требуются миграции."
-            self.log_func = logger.warning
-        else:
-            self.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            self.detail = "SQLAlchemy ProgrammingError"
-            self.log_func = logger.error
-        return await super().__call__(request, exception)

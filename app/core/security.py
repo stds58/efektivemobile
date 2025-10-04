@@ -25,7 +25,7 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
-    print('to_encode == ', to_encode)
+    print("to_encode == ", to_encode)
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:

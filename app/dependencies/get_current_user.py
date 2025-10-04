@@ -9,7 +9,6 @@ from app.core.config import settings
 from app.services.user import get_user_by_id
 from app.dependencies.get_db import connection
 from app.models.user import User
-#from app.schemas.token import TokenData
 from app.exceptions.base import BadCredentialsError, UserInactiveError, BlacklistedError
 from app.core.blacklist import token_blacklist
 from app.schemas.permission import AccessContext
@@ -31,7 +30,7 @@ async def get_current_user(
         user_id = payload.get("sub")
         if user_id is None:
             raise BadCredentialsError
-        #token_data = TokenData(user_id=user_id)
+        # token_data = TokenData(user_id=user_id)
     except InvalidTokenError as exc:
         raise BadCredentialsError from exc
 
