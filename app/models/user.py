@@ -16,7 +16,9 @@ user_role_association = Table(
     Base.metadata,
     Column("user_id", ForeignKey("user.id"), primary_key=True),
     Column("role_id", ForeignKey("role.id"), primary_key=True),
-    Column("created_at", DateTime(timezone=True), server_default=func.now(), nullable=False),
+    Column(
+        "created_at", DateTime(timezone=True), server_default=func.now(), nullable=False
+    ),
 )
 
 

@@ -6,7 +6,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.models import Role, AccessRule, BusinessElement
 from app.models.user import User, user_role_association
-from app.schemas.user import SchemaUserPatch, SchemaUserBase, SchemaUserFilter, UserHashPassword
+from app.schemas.user import (
+    SchemaUserPatch,
+    SchemaUserBase,
+    SchemaUserFilter,
+    UserHashPassword,
+)
 from app.schemas.permission import SchemaPermissionBase
 from app.crud.base import BaseDAO
 
@@ -17,20 +22,23 @@ class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
     filter_schema = SchemaUserFilter
     pydantic_model = SchemaUserBase
 
-    #_exclude_from_filter_by = {"id"}
+    # _exclude_from_filter_by = {"id"}
 
     @classmethod
-    async def get_with_roles(cls, session: AsyncSession, user_id: int) -> Optional[User]:
-        query = select(cls.model).where(cls.model.id == user_id).options(selectinload(cls.model.roles))
+    async def get_with_roles(
+        cls, session: AsyncSession, user_id: int
+    ) -> Optional[User]:
+        query = (
+            select(cls.model)
+            .where(cls.model.id == user_id)
+            .options(selectinload(cls.model.roles))
+        )
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
     @classmethod
     async def get_with_permissions(
-            cls,
-            user_id: UUID,
-            business_element_name: str,
-            session: AsyncSession
+        cls, user_id: UUID, business_element_name: str, session: AsyncSession
     ) -> List[str]:
         query = (
             select(AccessRule)
@@ -39,7 +47,7 @@ class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
             .join(user_role_association, Role.id == user_role_association.c.role_id)
             .where(
                 user_role_association.c.user_id == user_id,
-                BusinessElement.name == business_element_name
+                BusinessElement.name == business_element_name,
             )
         )
         result = await session.execute(query)
@@ -52,7 +60,6 @@ class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
                     setattr(aggregated, field_name, True)
 
         return aggregated.to_permission_list()
-
 
 
 class UserPasswordDAO(BaseDAO[User, None, SchemaUserFilter]):
