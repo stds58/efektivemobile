@@ -26,7 +26,7 @@ async def find_many_category(
             filters=filters, session=session, pagination=pagination
         )
     raise PermissionDenied(
-        custom_detail="Missing read or read_all permission on product"
+        custom_detail="Missing read or read_all permission on category"
     )
 
 
@@ -36,7 +36,7 @@ async def add_one_category(
     if "create_permission" in access.permissions:
         values_dict = data.model_dump(exclude_unset=True)
         return await CategoryDAO.add_one(session=session, values=values_dict)
-    raise PermissionDenied(custom_detail="Missing create permission on product")
+    raise PermissionDenied(custom_detail="Missing create permission on category")
 
 
 async def update_one_category(
@@ -55,7 +55,7 @@ async def update_one_category(
             model_id=category_id, session=session, values=filters_dict
         )
     raise PermissionDenied(
-        custom_detail="Missing update or update_all permission on product"
+        custom_detail="Missing update or update_all permission on category"
     )
 
 
@@ -67,5 +67,5 @@ async def delete_one_category(
     if "delete_permission" in access.permissions:
         return await CategoryDAO.delete_one_by_id(model_id=category_id, session=session)
     raise PermissionDenied(
-        custom_detail="Missing delete or delete_all permission on product"
+        custom_detail="Missing delete or delete_all permission on category"
     )

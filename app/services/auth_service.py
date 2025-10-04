@@ -66,19 +66,6 @@ class AuthService:
         )
         return encoded_jwt
 
-    # @staticmethod
-    # def refresh_tokens(refresh_token: str) -> Token:
-    #     """
-    #     Обновляет access и refresh токены на основе действительного refresh-токена.
-    #     """
-    #     payload = AuthService.decode_refresh_token(refresh_token)
-    #     user_id = payload.get("sub")
-    #
-    #     new_access_token = AuthService.create_access_token({"sub": user_id})
-    #     new_refresh_token = AuthService.create_refresh_token({"sub": user_id})
-    #
-    #     return Token(access_token=new_access_token, refresh_token=new_refresh_token)
-
     @staticmethod
     def decode_refresh_token(token: str) -> Optional[dict]:
         try:

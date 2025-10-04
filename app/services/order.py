@@ -24,6 +24,7 @@ async def find_many_order(
                 custom_detail="Missing read or read_all permission on order"
             )
         filters.user_id = access.user_id
+        print('filters.user_id ', filters.user_id)
         return await OrderDAO.find_many(
             filters=filters, session=session, pagination=pagination
         )

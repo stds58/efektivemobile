@@ -55,6 +55,6 @@ def connection(isolation_level: Optional[str] = None, commit: bool = True):
                 logger.critical(" Exception: %s", exc)
                 if session.in_transaction():
                     await session.rollback()
-                raise CustomInternalServerException from exc
+                raise
 
     return dependency
