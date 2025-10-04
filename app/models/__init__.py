@@ -9,4 +9,13 @@ from .product import Product
 
 
 # Теперь при импорте Base автоматически загружаются все модели
-__all__ = ["Base", "User", "Order", "Role", "AccessRule", "BusinessElement", "Category", "Product"]
+__all__ = [
+    "Base",
+    "User",
+    "Order",
+    "Role",
+    "AccessRule",
+    "BusinessElement",
+    "Category",
+    "Product",
+]

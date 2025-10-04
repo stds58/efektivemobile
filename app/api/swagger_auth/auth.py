@@ -12,6 +12,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
 
 swagger_router = APIRouter(prefix="/auth", tags=["auth"])
 
+
 @swagger_router.post("/swaggerlogin", response_model=Token)
 async def swaggerlogin_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),

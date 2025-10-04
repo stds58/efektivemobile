@@ -3,7 +3,6 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-
 class SchemaPermissionBase(BaseModel):
     read_permission: Optional[bool] = False
     read_all_permission: Optional[bool] = False

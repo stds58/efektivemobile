@@ -15,5 +15,6 @@ v1_router.include_router(user_router, prefix="/users", tags=["user"])
 v1_router.include_router(product_router, prefix="/products", tags=["product"])
 v1_router.include_router(category_router, prefix="/categorys", tags=["category"])
 v1_router.include_router(order_router, prefix="/orders", tags=["order"])
-v1_router.include_router(access_rule_router, prefix="/access_rules", tags=["access_rule"])
-
+v1_router.include_router(
+    access_rule_router, prefix="/access_rules", tags=["access_rule"]
+)

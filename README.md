@@ -32,6 +32,7 @@
 
 http://127.0.0.1:8000/api/docs
 
+
 **alembic**
 
     alembic revision --autogenerate -m "Auto-generated migration"
