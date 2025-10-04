@@ -1,12 +1,11 @@
-
 BUSINESS_ELEMENTS_DATA = [
-        {"name": "user", "description": "Управление пользователями"},
-        {"name": "product", "description": "Управление товарами"},
-        {"name": "order", "description": "Управление заказами"},
-        {"name": "category", "description": "Управление категориями"},
-        {"name": "access_rule", "description": "Управление правами доступа"},
-        {"name": "user_roles", "description": "Управление ролями"},
-    ]
+    {"name": "user", "description": "Управление пользователями"},
+    {"name": "product", "description": "Управление товарами"},
+    {"name": "order", "description": "Управление заказами"},
+    {"name": "category", "description": "Управление категориями"},
+    {"name": "access_rule", "description": "Управление правами доступа"},
+    {"name": "user_roles", "description": "Управление ролями"},
+]
 
 ROLES_DATA = [
     {"name": "admin", "description": "администратор"},
@@ -24,8 +23,8 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": True,
         "delete_permission": True,
-        "delete_all_permission": True
-     },
+        "delete_all_permission": True,
+    },
     {
         "role_name": "admin",
         "businesselement_name": "product",
@@ -35,7 +34,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": True,
         "delete_permission": True,
-        "delete_all_permission": True
+        "delete_all_permission": True,
     },
     {
         "role_name": "admin",
@@ -46,7 +45,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": True,
         "delete_permission": True,
-        "delete_all_permission": True
+        "delete_all_permission": True,
     },
     {
         "role_name": "admin",
@@ -57,7 +56,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": True,
         "delete_permission": True,
-        "delete_all_permission": True
+        "delete_all_permission": True,
     },
     {
         "role_name": "admin",
@@ -68,7 +67,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": True,
         "delete_permission": True,
-        "delete_all_permission": True
+        "delete_all_permission": True,
     },
     {
         "role_name": "admin",
@@ -79,9 +78,8 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": True,
         "delete_permission": True,
-        "delete_all_permission": True
+        "delete_all_permission": True,
     },
-
     {
         "role_name": "manager",
         "businesselement_name": "user",
@@ -91,7 +89,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "manager",
@@ -102,7 +100,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "manager",
@@ -113,7 +111,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "manager",
@@ -124,7 +122,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "manager",
@@ -135,7 +133,7 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "manager",
@@ -146,19 +144,18 @@ ACCESS_RULES_DATA = [
         "update_permission": True,
         "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
-
     {
         "role_name": "user",
         "businesselement_name": "user",
-        "read_permission": True,
+        "read_permission": False,
         "read_all_permission": False,
         "create_permission": False,
         "update_permission": False,
         "update_all_permission": False,
         "delete_permission": False,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "user",
@@ -169,18 +166,18 @@ ACCESS_RULES_DATA = [
         "update_permission": False,
         "update_all_permission": False,
         "delete_permission": False,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "user",
         "businesselement_name": "order",
         "read_permission": True,
         "read_all_permission": False,
-        "create_permission": False,
+        "create_permission": True,
         "update_permission": True,
         "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "user",
@@ -191,29 +188,29 @@ ACCESS_RULES_DATA = [
         "update_permission": False,
         "update_all_permission": False,
         "delete_permission": False,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "user",
         "businesselement_name": "access_rule",
-        "read_permission": True,
+        "read_permission": False,
         "read_all_permission": False,
         "create_permission": False,
         "update_permission": False,
         "update_all_permission": False,
         "delete_permission": False,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
     {
         "role_name": "user",
         "businesselement_name": "user_roles",
-        "read_permission": True,
+        "read_permission": False,
         "read_all_permission": False,
         "create_permission": False,
         "update_permission": False,
         "update_all_permission": False,
         "delete_permission": False,
-        "delete_all_permission": False
+        "delete_all_permission": False,
     },
 ]
 
@@ -223,20 +220,82 @@ USERS_DATA = [
         "password": "admin@example.com",
         "first_name": "Админ",
         "last_name": "Системный",
-        "role_names": ["admin"]
+        "role_names": ["admin"],
     },
     {
         "email": "manager@example.com",
         "password": "manager@example.com",
         "first_name": "manager",
         "last_name": "manager",
-        "role_names": ["manager"]
+        "role_names": ["manager"],
     },
     {
         "email": "user@example.com",
         "password": "user@example.com",
         "first_name": "Обычный",
         "last_name": "Пользователь",
-        "role_names": ["user"]
+        "role_names": ["user"],
     },
 ]
+
+CATEGORY_DATA = [
+    {"name": "канцелярия"},
+    {"name": "транспорт"},
+    {"name": "дом"},
+]
+
+PRODUCT_DATA = [
+    {
+        "category": "канцелярия",
+        "name": "бумага",
+        "price": 100
+    },
+    {
+        "category": "канцелярия",
+        "name": "кнопки",
+        "price": 150
+    },
+    {
+        "category": "транспорт",
+        "name": "колесо",
+        "price": 250
+    },
+    {
+        "category": "транспорт",
+        "name": "шина",
+        "price": 200
+    },
+    {
+        "category": "дом",
+        "name": "ведро",
+        "price": 100
+    },
+    {
+        "category": "дом",
+        "name": "горшок",
+        "price": 100
+    },
+]
+
+ORDER_DATA = [
+    {
+        "user":"admin@example.com",
+        "product":"ведро",
+        "quantity": 5,
+        "is_paid": False
+    },
+    {
+        "user": "admin@example.com",
+        "product": "шина",
+        "quantity": 15,
+        "is_paid": False
+    },
+    {
+        "user": "user@example.com",
+        "product": "бумага",
+        "quantity": 10,
+        "is_paid": False
+    },
+]
+
+
