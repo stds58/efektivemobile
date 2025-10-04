@@ -15,30 +15,36 @@ router = APIRouter()
 
 @router.get("", summary="Get users", response_model=List[SchemaUserBase])
 async def get_users(
-        filters: SchemaUserFilter = Depends(),
-        session: AsyncSession = Depends(connection()),
-        access: AccessContext = Depends(require_permission("user")),
-        pagination: PaginationParams = Depends(),
+    filters: SchemaUserFilter = Depends(),
+    session: AsyncSession = Depends(connection()),
+    access: AccessContext = Depends(require_permission("user")),
+    pagination: PaginationParams = Depends(),
 ):
-    return await find_many_user(access=access, filters=filters, session=session, pagination=pagination)
+    return await find_many_user(
+        access=access, filters=filters, session=session, pagination=pagination
+    )
 
 
 @router.patch("/{id}", summary="Update user", response_model=SchemaUserBase)
 async def edit_user(
-        user_id: UUID,
-        user_in: SchemaUserPatch,
-        session: AsyncSession = Depends(connection()),
-        access: AccessContext = Depends(require_permission("user")),
+    user_id: UUID,
+    user_in: SchemaUserPatch,
+    session: AsyncSession = Depends(connection()),
+    access: AccessContext = Depends(require_permission("user")),
 ):
-    updated_user = await update_user(access=access, filters=user_in, session=session, user_id=user_id)
+    updated_user = await update_user(
+        access=access, filters=user_in, session=session, user_id=user_id
+    )
     return updated_user
 
 
-@router.delete("/{id}", summary="Soft delete user", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{id}", summary="Soft delete user", status_code=status.HTTP_204_NO_CONTENT
+)
 async def unactivate_user(
-        user_id: UUID,
-        session: AsyncSession = Depends(connection()),
-        access: AccessContext = Depends(require_permission("user")),
+    user_id: UUID,
+    session: AsyncSession = Depends(connection()),
+    access: AccessContext = Depends(require_permission("user")),
 ):
     await soft_delete_user(access=access, session=session, user_id=user_id)
     return

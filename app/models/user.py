@@ -1,13 +1,7 @@
 from typing import List
-from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy import Table, Column, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, relationship
-from app.models.base import (
-    Base,
-    StrUniq,
-    StrNullFalse,
-    StrNullTrue,
-    BoolDefTrue,
-)
+from app.models.base import Base, StrUniq, StrNullFalse, StrNullTrue, BoolDefTrue
 from app.models.role import Role
 
 
@@ -16,6 +10,9 @@ user_role_association = Table(
     Base.metadata,
     Column("user_id", ForeignKey("user.id"), primary_key=True),
     Column("role_id", ForeignKey("role.id"), primary_key=True),
+    Column(
+        "created_at", DateTime(timezone=True), server_default=func.now(), nullable=False
+    ),
 )
 
 
@@ -31,6 +28,12 @@ class User(Base):
         secondary=user_role_association,
         back_populates="users",
         lazy="selectin",  # Для асинхронной загрузки ролей вместе с пользователем
+    )
+
+    orders: Mapped[List["Order"]] = relationship(
+        "Order",
+        back_populates="users",
+        lazy="selectin",
     )
 
     def __str__(self):

@@ -1,6 +1,10 @@
 from app.crud.base import BaseDAO
 from app.models.product import Product
-from app.schemas.product import SchemaProductBase, SchemaProductCreate, SchemaProductFilter
+from app.schemas.product import (
+    SchemaProductBase,
+    SchemaProductCreate,
+    SchemaProductFilter,
+)
 
 
 class ProductDAO(BaseDAO[Product, SchemaProductCreate, SchemaProductFilter]):

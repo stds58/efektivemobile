@@ -24,6 +24,7 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
+
 app.add_middleware(
     SessionMiddleware, secret_key=settings.SESSION_MIDDLEWARE_SECRET_KEY, max_age=3600
 )
@@ -37,12 +38,9 @@ app.add_middleware(
     allow_methods=[
         "GET",
         "POST",
-        "PUT",
         "DELETE",
         "PATCH",
-        "OPTIONS",
     ],
-    # добавить X-Requested-With если нужна совместимость с jQuery / устаревшими клиентами
     allow_headers=[
         "Content-Type",
         "Authorization",
@@ -62,4 +60,4 @@ def root():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000)

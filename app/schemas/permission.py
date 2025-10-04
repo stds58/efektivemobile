@@ -1,7 +1,7 @@
 from typing import Optional, List
+from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel
-
 
 
 class SchemaPermissionBase(BaseModel):
@@ -25,3 +25,18 @@ class SchemaPermissionBase(BaseModel):
 class AccessContext(BaseModel):
     user_id: UUID
     permissions: List[str]
+
+
+class SchemaUserRolesBase(BaseModel):
+    user_id: UUID
+    role_id: UUID
+    created_at: datetime
+
+
+class SchemaUserRolesCreate(BaseModel):
+    user_id: UUID
+    role_id: UUID
+
+
+class SchemaUserRolesFilter(BaseModel):
+    user_id: Optional[UUID] = None

@@ -1,6 +1,7 @@
 """
 Класс настроек приложения
 """
+
 import secrets
 from functools import lru_cache
 from dotenv import load_dotenv
@@ -36,13 +37,12 @@ class Settings(BaseSettings):
     def DATABASE_URL(self) -> str:  # pylint: disable=invalid-name
         return (
             f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"
-            f"{settings.DB_HOST}:{settings.DB_PORT_EXTERNAL}/{settings.DB_NAME}"
+            f"{settings.DB_HOST}:{settings.DB_PORT_INTERNAL}/{settings.DB_NAME}"
         )
 
     @staticmethod
     def _generate_secret_key() -> str:
         return secrets.token_urlsafe(64)
-
 
     model_config = ConfigDict(extra="ignore")
 

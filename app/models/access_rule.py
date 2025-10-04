@@ -1,11 +1,14 @@
+from uuid import UUID
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from .base import Base, BoolDefFalse
 
 
 class AccessRule(Base):
-    role_id: Mapped[str] = mapped_column(ForeignKey("role.id"), primary_key=True)
-    businesselement_id: Mapped[str] = mapped_column(ForeignKey("businesselement.id"), primary_key=True)
+    role_id: Mapped[UUID] = mapped_column(ForeignKey("role.id"), primary_key=True)
+    businesselement_id: Mapped[UUID] = mapped_column(
+        ForeignKey("businesselement.id"), primary_key=True
+    )
 
     read_permission: Mapped[BoolDefFalse]
     read_all_permission: Mapped[BoolDefFalse]

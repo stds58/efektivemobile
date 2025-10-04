@@ -1,7 +1,14 @@
 from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field, StringConstraints, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 from app.exceptions.base import PasswordMismatchError, MissingLoginCredentialsException
 
 
@@ -59,14 +66,28 @@ class SchemaUserPatch(BaseModel):
     )
 
 
-class SchemaUserLogin(BaseModel):
-    email: Optional[EmailStr] = None
+class SchemaUserSwaggerLogin(BaseModel):
     username: Optional[EmailStr] = None
     password: str = Field(
         ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
     )
 
-    @model_validator(mode='after')
+
+class SchemaUserLogin(BaseModel):
+    email: Optional[EmailStr] = None
+    password: str = Field(
+        ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
+    )
+
+
+class SchemaUserLoginMain(BaseModel):
+    username: Optional[EmailStr] = None
+    email: Optional[EmailStr] = None
+    password: str = Field(
+        ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
+    )
+
+    @model_validator(mode="after")
     def check_email_or_username(self):
         if not self.email and not self.username:
             raise MissingLoginCredentialsException

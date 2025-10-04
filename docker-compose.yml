@@ -1,4 +1,22 @@
 services:
+  fastapi-app:
+    container_name: fastapi-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: true
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      devops_mynetwork:
+        ipv4_address: 172.21.0.3
+    restart: unless-stopped
+
   db:
     container_name: db
     image: postgres:16

@@ -1,18 +1,27 @@
 from typing import Optional, List
 from uuid import UUID, uuid4
+from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import User
 from app.crud.user import UserDAO, UserPasswordDAO
 from app.schemas.base import PaginationParams
-from app.schemas.permission import AccessContext
+from app.schemas.permission import (
+    AccessContext,
+    SchemaUserRolesBase,
+    SchemaUserRolesCreate,
+    SchemaUserRolesFilter,
+)
 from app.schemas.token import Token
 from app.schemas.user import (
     SchemaUserCreate,
     SchemaUserPatch,
     SchemaUserFilter,
     SchemaUserLogin,
-    UserHashPassword
+    SchemaUserSwaggerLogin,
+    SchemaUserLoginMain,
+    UserHashPassword,
 )
 from app.services.auth_service import AuthService
 from app.exceptions.base import (
@@ -25,23 +34,29 @@ from app.exceptions.base import (
 
 
 async def find_many_user(
-        access: AccessContext,
-        filters: SchemaUserFilter,
-        session: AsyncSession,
-        pagination: PaginationParams
+    access: AccessContext,
+    filters: SchemaUserFilter,
+    session: AsyncSession,
+    pagination: PaginationParams,
 ) -> Optional[User]:
-    users = await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
+    users = await UserDAO.find_many(
+        filters=filters, session=session, pagination=pagination
+    )
     if "read_all_permission" in access.permissions:
         return users
     if "read_permission" in access.permissions:
         if filters.id is not None and filters.id != access.user_id:
-            raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
+            raise PermissionDenied(
+                custom_detail="Missing read or read_all permission on user"
+            )
         filters.id = access.user_id
         return users
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
-async def get_user_by_id(access: AccessContext, user_id: UUID, session: AsyncSession) -> Optional[User]:
+async def get_user_by_id(
+    access: AccessContext, user_id: UUID, session: AsyncSession
+) -> Optional[User]:
     filter_obj = SchemaUserFilter(id=user_id)
     user = await UserDAO.find_one(filters=filter_obj, session=session)
     if "read_all_permission" in access.permissions:
@@ -51,7 +66,9 @@ async def get_user_by_id(access: AccessContext, user_id: UUID, session: AsyncSes
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
-async def get_user_by_email(access: AccessContext, email: str, session: AsyncSession) -> Optional[User]:
+async def get_user_by_email(
+    access: AccessContext, email: str, session: AsyncSession
+) -> Optional[User]:
     filter_obj = SchemaUserFilter(email=email)
     user = await UserDAO.find_one(filters=filter_obj, session=session)
     if "read_all_permission" in access.permissions:
@@ -62,10 +79,10 @@ async def get_user_by_email(access: AccessContext, email: str, session: AsyncSes
 
 
 async def update_user(
-        access: AccessContext,
-        filters: SchemaUserPatch,
-        session: AsyncSession,
-        user_id: UUID
+    access: AccessContext,
+    filters: SchemaUserPatch,
+    session: AsyncSession,
+    user_id: UUID,
 ):
     filters_dict = filters.model_dump(exclude_unset=True)
     password = filters_dict.get("password")
@@ -78,17 +95,15 @@ async def update_user(
     elif "update_permission" in access.permissions and user_id == access.user_id:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
     else:
-        raise PermissionDenied(custom_detail="Missing update or update_all permission on user")
+        raise PermissionDenied(
+            custom_detail="Missing update or update_all permission on user"
+        )
 
     user = await get_user_by_id(access=access, user_id=user_id, session=session)
     return user
 
 
-async def soft_delete_user(
-        user_id: UUID,
-        access: AccessContext,
-        session: AsyncSession
-):
+async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncSession):
     filters_dict = {"id": user_id, "is_active": False}
     if "delete_all_permission" in access.permissions:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
@@ -96,13 +111,17 @@ async def soft_delete_user(
     if "delete_permission" in access.permissions and user_id == access.user_id:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
         return
-    raise PermissionDenied(custom_detail="Missing delete or delete_all permission on user")
+    raise PermissionDenied(
+        custom_detail="Missing delete or delete_all permission on user"
+    )
 
 
-async def create_user(user_in: SchemaUserCreate,session: AsyncSession):
+async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
     fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid,permissions=["read_all_permission"])
-    existing_user = await get_user_by_email(access=access, email=user_in.email, session=session)
+    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
+    existing_user = await get_user_by_email(
+        access=access, email=user_in.email, session=session
+    )
     if existing_user:
         raise EmailAlreadyRegisteredError
     if user_in.password == user_in.password_confirm:
@@ -116,7 +135,9 @@ async def create_user(user_in: SchemaUserCreate,session: AsyncSession):
     return user
 
 
-async def get_hash_password(user_id: UUID, session: AsyncSession) -> Optional[UserHashPassword]:
+async def get_hash_password(
+    user_id: UUID, session: AsyncSession
+) -> Optional[UserHashPassword]:
     filter_obj = SchemaUserFilter(id=user_id)
     user = await UserPasswordDAO.find_one(filters=filter_obj, session=session)
     return user.password
@@ -129,7 +150,34 @@ async def get_user_roles(user_id: UUID, session: AsyncSession) -> List[str]:
     return [role.name for role in user.roles]
 
 
-async def authenticate_user(user_in:SchemaUserLogin, session: AsyncSession) -> Token:
+async def set_token_in_cookie(response: Response, tokens: Token):
+    response.set_cookie(
+        key="users_access_token",
+        value=tokens.access_token,
+        httponly=True,
+        secure=False,
+        domain=None,
+        path="/",
+        samesite="strict",
+        max_age=60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    )
+
+    response.set_cookie(
+        key="users_refresh_token",
+        value=tokens.refresh_token,
+        httponly=True,
+        secure=False,  # settings.SECURE_COOKIES
+        domain=None,
+        path="/",
+        samesite="strict",
+        max_age=60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
+    )
+    return
+
+
+async def authenticate_user(
+    user_in: SchemaUserLoginMain, session: AsyncSession
+) -> Token:
     login = user_in.email if user_in.username is None else user_in.username
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
@@ -145,6 +193,99 @@ async def authenticate_user(user_in:SchemaUserLogin, session: AsyncSession) -> T
         raise BadCredentialsError
 
     role_names = await get_user_roles(user_id=user.id, session=session)
-    access_token = AuthService.create_access_token(data={"sub": str(user.id), "role": role_names})
+    access_token = AuthService.create_access_token(
+        data={"sub": str(user.id), "role": role_names}
+    )
+    refresh_token = AuthService.create_refresh_token({"sub": str(user.id)})
 
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=access_token, refresh_token=refresh_token)
+
+
+async def authenticate_user_api(
+    user_in: SchemaUserLogin, session: AsyncSession
+) -> Token:
+    user = SchemaUserLoginMain(email=user_in.email, password=user_in.password)
+    return await authenticate_user(user_in=user, session=session)
+
+
+async def authenticate_user_swagger(
+    user_in: SchemaUserSwaggerLogin, session: AsyncSession
+) -> Token:
+    user = SchemaUserSwaggerLogin(username=user_in.username, password=user_in.password)
+    return await authenticate_user(user_in=user, session=session)
+
+
+async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Token:
+    payload = AuthService.decode_refresh_token(refresh_token)
+    user_id = payload.get("sub")
+    if not user_id:
+        raise BadCredentialsError
+
+    fake_uuid = uuid4()
+    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
+    user = await get_user_by_id(access=access, user_id=UUID(user_id), session=session)
+
+    if not user:
+        raise BadCredentialsError
+    if not user.is_active:
+        raise UserInactiveError
+
+    new_access = AuthService.create_access_token({"sub": str(user.id)})
+    new_refresh = AuthService.create_refresh_token({"sub": str(user.id)})
+
+    AuthService.ban_token(refresh_token)
+
+    return Token(access_token=new_access, refresh_token=new_refresh)
+
+
+async def add_role_to_user(
+    data: SchemaUserRolesCreate, access: AccessContext, session: AsyncSession
+) -> SchemaUserRolesBase:
+    if "create_permission" in access.permissions:
+        return await UserDAO.add_role_to_user(
+            session=session, user_id=data.user_id, role_id=data.role_id
+        )
+    raise PermissionDenied(custom_detail="Missing create_permission on user_roles")
+
+
+async def remove_role_from_user(
+    data: SchemaUserRolesCreate, access: AccessContext, session: AsyncSession
+) -> dict:
+    if "delete_all_permission" in access.permissions:
+        return await UserDAO.remove_role_from_user(
+            session=session, user_id=data.user_id, role_id=data.role_id
+        )
+
+    if "delete_permission" in access.permissions:
+        if access.user_id == data.user_id:
+            return await UserDAO.remove_role_from_user(
+                session=session, user_id=data.user_id, role_id=data.role_id
+            )
+        raise PermissionDenied(
+            custom_detail="Missing delete or delete_all permission on user_roles"
+        )
+
+    raise PermissionDenied(
+        custom_detail="Missing delete or delete_all permission on user_roles"
+    )
+
+
+async def get_all_user_roles(
+    filters: SchemaUserRolesFilter, access: AccessContext, session: AsyncSession
+) -> List[dict]:
+    if "read_all_permission" in access.permissions:
+        return await UserDAO.get_from_user_roles(
+            session=session, user_id=filters.user_id
+        )
+
+    if "read_permission" in access.permissions:
+        if filters.user_id is not None and filters.user_id != access.user_id:
+            raise PermissionDenied(
+                custom_detail="Missing read or read_all permission on user_roles"
+            )
+        filters.user_id = access.user_id
+        return UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
+
+    raise PermissionDenied(
+        custom_detail="Missing read or read_all permission on user_roles"
+    )

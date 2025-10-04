@@ -8,23 +8,26 @@ class SchemaProductBase(BaseModel):
     id: UUID
     created_at: datetime
     updated_at: datetime
-    user_id: UUID
+    category_id: UUID
     name: str
     price: int
 
 
 class SchemaProductCreate(BaseModel):
-    user_id: UUID
+    category_id: UUID
     name: str
     price: int
 
 
 class SchemaProductFilter(BaseModel):
+    category_id: Optional[UUID] = None
     name: Optional[str] = None
-    user_id: Optional[UUID] = None
     price: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-# class SchemaProductFilterSystem(SchemaProductFilter):
-#     user_id: Optional[UUID] = None
+
+class SchemaProductPatch(BaseModel):
+    category_id: Optional[UUID] = None
+    name: Optional[str] = None
+    price: Optional[int] = None

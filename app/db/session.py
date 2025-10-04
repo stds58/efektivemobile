@@ -40,12 +40,12 @@ async def get_session_with_isolation(
                 current_isolation_level = result.scalar()
                 logger.info("Текущий уровень изоляции: %s", current_isolation_level)
             yield session
-    except (FastAPIHTTPException, StarletteHTTPException) as e:
-        logger.error("Ошибка подключения к БД при создании сессии: %s", e)
+    except (FastAPIHTTPException, StarletteHTTPException) as exc:
+        logger.error("Ошибка подключения к БД при создании сессии: %s", exc)
         raise
-    except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as e:
-        logger.error("Ошибка подключения к БД при создании сессии %s", e)
+    except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as exc:
+        logger.error("Ошибка подключения к БД при создании сессии %s", exc)
         raise
-    except Exception as e:
-        logger.error("Неожиданная ошибка при создании сессии: %s", e)
+    except Exception as exc:
+        logger.error("Неожиданная ошибка при создании сессии: %s", exc)
         raise
