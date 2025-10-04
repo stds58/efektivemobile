@@ -23,13 +23,13 @@ class SchemaAccessRuleFilter(BaseModel):
     id: Optional[UUID] = None
     role_id: Optional[UUID] = None
     businesselement_id: Optional[UUID] = None
-    read_permission: Optional[bool] = False
-    read_all_permission: Optional[bool] = False
-    create_permission: Optional[bool] = False
-    update_permission: Optional[bool] = False
-    update_all_permission: Optional[bool] = False
-    delete_permission: Optional[bool] = False
-    delete_all_permission: Optional[bool] = False
+    read_permission: Optional[bool] = None
+    read_all_permission: Optional[bool] = None
+    create_permission: Optional[bool] = None
+    update_permission: Optional[bool] = None
+    update_all_permission: Optional[bool] = None
+    delete_permission: Optional[bool] = None
+    delete_all_permission: Optional[bool] = None
 
 
 class SchemaAccessRulePatch(BaseModel):
