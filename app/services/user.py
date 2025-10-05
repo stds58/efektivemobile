@@ -4,9 +4,11 @@ from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import get_password_hash
+from app.crud.role import RoleDAO
 from app.models import User
 from app.crud.user import UserDAO, UserPasswordDAO
 from app.schemas.base import PaginationParams
+from app.schemas.role import SchemaRoleFilter
 from app.schemas.permission import (
     AccessContext,
     SchemaUserRolesBase,
@@ -39,18 +41,15 @@ async def find_many_user(
     session: AsyncSession,
     pagination: PaginationParams,
 ) -> Optional[User]:
-    users = await UserDAO.find_many(
-        filters=filters, session=session, pagination=pagination
-    )
     if "read_all_permission" in access.permissions:
-        return users
+        return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
     if "read_permission" in access.permissions:
         if filters.id is not None and filters.id != access.user_id:
             raise PermissionDenied(
                 custom_detail="Missing read or read_all permission on user"
             )
         filters.id = access.user_id
-        return users
+        return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
@@ -118,7 +117,7 @@ async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncS
 
 async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
     fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
+    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission", "create_permission"])
     existing_user = await get_user_by_email(
         access=access, email=user_in.email, session=session
     )
@@ -132,6 +131,12 @@ async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
     else:
         raise PasswordMismatchError
     user = await UserDAO.add_one(session=session, values=values_dict)
+
+    #назначение роли user новому пользователю
+    role_user = await RoleDAO.find_one(session=session, filters=SchemaRoleFilter(name="user"))
+    data = SchemaUserRolesCreate(user_id=user.id, role_id=role_user.id)
+    await add_role_to_user(data=data, access=access, session=session)
+
     return user
 
 

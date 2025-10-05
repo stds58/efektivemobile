@@ -149,7 +149,7 @@ ACCESS_RULES_DATA = [
     {
         "role_name": "user",
         "businesselement_name": "user",
-        "read_permission": False,
+        "read_permission": True,
         "read_all_permission": False,
         "create_permission": False,
         "update_permission": False,

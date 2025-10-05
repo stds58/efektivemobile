@@ -12,5 +12,3 @@ class ProductDAO(BaseDAO[Product, SchemaProductCreate, SchemaProductFilter]):
     create_schema = SchemaProductCreate
     filter_schema = SchemaProductFilter
     pydantic_model = SchemaProductBase
-
-    _exclude_from_filter_by = {"id"}
