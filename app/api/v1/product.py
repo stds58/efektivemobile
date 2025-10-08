@@ -1,5 +1,6 @@
+import logging
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.get_db import connection
 from app.schemas.product import (
@@ -19,6 +20,8 @@ from app.schemas.permission import AccessContext
 from app.schemas.base import PaginationParams
 
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -29,6 +32,9 @@ async def get_products(
     access: AccessContext = Depends(require_permission("product")),
     pagination: PaginationParams = Depends(),
 ):
+    logger.info("user_id=%s, filters=%s pagination=%s",
+                access.user_id, filters, pagination
+                )
     return await find_many_product(
         access=access, filters=filters, session=session, pagination=pagination
     )

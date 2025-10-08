@@ -1,11 +1,45 @@
+import structlog
+from structlog.processors import CallsiteParameterAdder, CallsiteParameter
+import logging
+import sys
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.middleware.auth_logging_middleware import auth_logging_middleware
 from app.api.v1.base_router import v1_router
 from app.api.swagger_auth.auth import swagger_router
 from app.core.config import settings
 from app.utils.importer_data import seed_all
+
+
+logging.basicConfig(
+    format="%(message)s",
+    stream=sys.stdout,
+    level=logging.INFO,
+)
+
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.dict_tracebacks,
+        CallsiteParameterAdder(
+            [
+                CallsiteParameter.FILENAME,
+                CallsiteParameter.FUNC_NAME,
+                CallsiteParameter.LINENO,
+            ]
+        ),
+        structlog.processors.JSONRenderer(ensure_ascii=False),
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+)
+
+logger = structlog.get_logger()
 
 
 @asynccontextmanager
@@ -29,6 +63,8 @@ app.add_middleware(
     SessionMiddleware, secret_key=settings.SESSION_MIDDLEWARE_SECRET_KEY, max_age=3600
 )
 
+app.middleware("http")(auth_logging_middleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -46,6 +82,8 @@ app.add_middleware(
         "Authorization",
     ],
 )
+
+
 
 
 app.include_router(v1_router)

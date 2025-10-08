@@ -2,8 +2,7 @@
 Контекстный менеджер для создания сессии с опциональным уровнем изоляции.
 Для гибкого управления уровнем изоляции
 """
-
-import logging
+import structlog
 from contextlib import asynccontextmanager
 from typing import Optional
 import asyncio
@@ -13,8 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 def create_session_factory(database_url: str):
@@ -38,14 +36,20 @@ async def get_session_with_isolation(
                     text("SHOW TRANSACTION ISOLATION LEVEL;")
                 )
                 current_isolation_level = result.scalar()
-                logger.info("Текущий уровень изоляции: %s", current_isolation_level)
+                logger.info("Текущий уровень изоляции", current_isolation_level=current_isolation_level)
             yield session
-    except (FastAPIHTTPException, StarletteHTTPException) as exc:
-        logger.error("Ошибка подключения к БД при создании сессии: %s", exc)
-        raise
+    # except (FastAPIHTTPException, StarletteHTTPException) as exc:
+    #     logger.info(
+    #         "Ошибка (FastAPIHTTPException, StarletteHTTPException)",
+    #         error=str(exc)
+    #     )
+    #     raise
     except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as exc:
-        logger.error("Ошибка подключения к БД при создании сессии %s", exc)
+        logger.info(
+            "Ошибка (ConnectionRefusedError, OSError, asyncio.TimeoutError)",
+            error=str(exc)
+        )
         raise
-    except Exception as exc:
-        logger.error("Неожиданная ошибка при создании сессии: %s", exc)
-        raise
+    # except Exception as exc:
+    #     logger.info("Неожиданная ошибка при создании сессии", error=str(exc))
+    #     raise

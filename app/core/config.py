@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     def DATABASE_URL(self) -> str:  # pylint: disable=invalid-name
         return (
             f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"
-            f"{settings.DB_HOST}:{settings.DB_PORT_INTERNAL}/{settings.DB_NAME}"
+            f"{settings.DB_HOST}:{settings.DB_PORT_EXTERNAL}/{settings.DB_NAME}"
         )
 
     @staticmethod

@@ -1,3 +1,4 @@
+import structlog
 from typing import Optional, List
 from uuid import UUID, uuid4
 from fastapi import Response
@@ -33,6 +34,9 @@ from app.exceptions.base import (
     PasswordMismatchError,
     PermissionDenied,
 )
+
+
+logger = structlog.get_logger()
 
 
 async def find_many_user(
@@ -186,12 +190,13 @@ async def authenticate_user(
     login = user_in.email if user_in.username is None else user_in.username
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-
     user = await get_user_by_email(access=access, email=login, session=session)
 
     if not user:
+        logger.error("в БД отсутствует user_id", user_id=user.id)
         raise BadCredentialsError
     if not user.is_active:
+        logger.error("пользователь отключён", user_id=user.id)
         raise UserInactiveError
     hash_password = await get_hash_password(user_id=user.id, session=session)
     if not AuthService.verify_password(user_in.password, hash_password):
