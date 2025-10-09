@@ -1,12 +1,14 @@
+import structlog
 from datetime import datetime, timedelta
-from typing import Optional
 import jwt
 from app.core.config import settings
 from app.core.security import verify_password, get_password_hash
 from app.exceptions.base import BlacklistedError, TokenExpiredError
 from app.core.blacklist import token_blacklist
-from app.exceptions.base import VerifyHashError
-from app.schemas.token import Token
+from app.schemas.token import Token, AccessToken, RefreshToken
+
+
+logger = structlog.get_logger()
 
 
 class AuthService:
@@ -31,15 +33,17 @@ class AuthService:
         return encoded_jwt
 
     @staticmethod
-    def decode_access_token(token: str) -> Optional[dict]:
+    def decode_access_token(token: str) -> AccessToken:
         try:
             if token in token_blacklist:
+                logger.error("BlacklistedError")
                 raise BlacklistedError
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
-            return payload
+            return AccessToken(**payload)
         except jwt.PyJWTError as exc:
+            logger.error("jwt.PyJWTError", error=str(exc))
             raise TokenExpiredError from exc
 
     @staticmethod
@@ -60,15 +64,18 @@ class AuthService:
         return encoded_jwt
 
     @staticmethod
-    def decode_refresh_token(token: str) -> Optional[dict]:
+    def decode_refresh_token(token: str) -> RefreshToken:
         try:
             if token in token_blacklist:
+                logger.error("BlacklistedError")
                 raise BlacklistedError
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
             if payload.get("type") != "refresh":
+                logger.error("jwt.InvalidTokenError", error="Is not a refresh token")
                 raise jwt.InvalidTokenError("Not a refresh token")
-            return payload
+            return RefreshToken(**payload)
         except jwt.PyJWTError as exc:
+            logger.error("jwt.PyJWTError", error=str(exc))
             raise TokenExpiredError from exc

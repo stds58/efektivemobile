@@ -1,3 +1,4 @@
+import structlog
 from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
@@ -10,6 +11,9 @@ from pydantic import (
     model_validator,
 )
 from app.exceptions.base import PasswordMismatchError, MissingLoginCredentialsException
+
+
+logger = structlog.get_logger()
 
 
 class SchemaUserBase(BaseModel):
@@ -50,6 +54,7 @@ class SchemaUserCreate(BaseModel):
     @field_validator("password_confirm")
     def passwords_match(cls, v, values):
         if "password" in values.data and v != values.data["password"]:
+            logger.error("PasswordMismatchError")
             raise PasswordMismatchError
         return v
 
@@ -90,6 +95,7 @@ class SchemaUserLoginMain(BaseModel):
     @model_validator(mode="after")
     def check_email_or_username(self):
         if not self.email and not self.username:
+            logger.error("MissingLoginCredentialsException")
             raise MissingLoginCredentialsException
         return self
 

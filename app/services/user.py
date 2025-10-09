@@ -49,11 +49,13 @@ async def find_many_user(
         return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
     if "read_permission" in access.permissions:
         if filters.id is not None and filters.id != access.user_id:
+            logger.error("PermissionDenied")
             raise PermissionDenied(
                 custom_detail="Missing read or read_all permission on user"
             )
         filters.id = access.user_id
         return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
@@ -66,6 +68,7 @@ async def get_user_by_id(
         return user
     if "read_permission" in access.permissions and user_id == access.user_id:
         return user
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
@@ -78,6 +81,7 @@ async def get_user_by_email(
         return user
     if "read_permission" in access.permissions and user.id == access.user_id:
         return user
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
@@ -98,6 +102,7 @@ async def update_user(
     elif "update_permission" in access.permissions and user_id == access.user_id:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
     else:
+        logger.error("PermissionDenied")
         raise PermissionDenied(
             custom_detail="Missing update or update_all permission on user"
         )
@@ -114,6 +119,7 @@ async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncS
     if "delete_permission" in access.permissions and user_id == access.user_id:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
         return
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing delete or delete_all permission on user"
     )
@@ -126,6 +132,7 @@ async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
         access=access, email=user_in.email, session=session
     )
     if existing_user:
+        logger.error("EmailAlreadyRegisteredError")
         raise EmailAlreadyRegisteredError
     if user_in.password == user_in.password_confirm:
         values_dict = user_in.model_dump(exclude_unset=True)
@@ -133,6 +140,7 @@ async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
         values_dict["password"] = password_hash
         values_dict.pop("password_confirm")
     else:
+        logger.error("PasswordMismatchError")
         raise PasswordMismatchError
     user = await UserDAO.add_one(session=session, values=values_dict)
 
@@ -229,6 +237,7 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
     payload = AuthService.decode_refresh_token(refresh_token)
     user_id = payload.get("sub")
     if not user_id:
+        logger.error("BadCredentialsError")
         raise BadCredentialsError
 
     fake_uuid = uuid4()
@@ -236,8 +245,10 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
     user = await get_user_by_id(access=access, user_id=UUID(user_id), session=session)
 
     if not user:
+        logger.error("BadCredentialsError")
         raise BadCredentialsError
     if not user.is_active:
+        logger.error("UserInactiveError")
         raise UserInactiveError
 
     new_access = AuthService.create_access_token({"sub": str(user.id)})
@@ -255,6 +266,7 @@ async def add_role_to_user(
         return await UserDAO.add_role_to_user(
             session=session, user_id=data.user_id, role_id=data.role_id
         )
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing create_permission on user_roles")
 
 
@@ -271,10 +283,12 @@ async def remove_role_from_user(
             return await UserDAO.remove_role_from_user(
                 session=session, user_id=data.user_id, role_id=data.role_id
             )
+        logger.error("PermissionDenied")
         raise PermissionDenied(
             custom_detail="Missing delete or delete_all permission on user_roles"
         )
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing delete or delete_all permission on user_roles"
     )
@@ -290,12 +304,25 @@ async def get_all_user_roles(
 
     if "read_permission" in access.permissions:
         if filters.user_id is not None and filters.user_id != access.user_id:
+            logger.error("PermissionDenied")
             raise PermissionDenied(
                 custom_detail="Missing read or read_all permission on user_roles"
             )
         filters.user_id = access.user_id
         return UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing read or read_all permission on user_roles"
     )
+
+
+async def ensureUserIsActive(user_id: UUID, session: AsyncSession) -> bool:
+    fake_uuid = uuid4()
+    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
+    user = await get_user_by_id(access=access, user_id=user_id, session=session)
+    if user is None:
+        raise BadCredentialsError
+    if not user.is_active:
+        raise UserInactiveError
+    return True

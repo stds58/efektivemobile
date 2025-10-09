@@ -12,6 +12,7 @@ def get_client_ip(request: Request) -> str:
         return real_ip
     return request.client.host if request.client else "unknown"
 
+
 async def auth_logging_middleware(request: Request, call_next):
     response = await call_next(request)
 

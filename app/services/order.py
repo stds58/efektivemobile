@@ -1,3 +1,4 @@
+import structlog
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.order import OrderDAO
@@ -5,6 +6,9 @@ from app.schemas.base import PaginationParams
 from app.schemas.order import SchemaOrderCreate, SchemaOrderFilter, SchemaOrderPatch
 from app.schemas.permission import AccessContext
 from app.exceptions.base import PermissionDenied
+
+
+logger = structlog.get_logger()
 
 
 async def find_many_order(
@@ -20,15 +24,16 @@ async def find_many_order(
 
     if "read_permission" in access.permissions:
         if filters.user_id is not None and filters.user_id != access.user_id:
+            logger.error("PermissionDenied")
             raise PermissionDenied(
                 custom_detail="Missing read or read_all permission on order"
             )
         filters.user_id = access.user_id
-        print("filters.user_id ", filters.user_id)
         return await OrderDAO.find_many(
             filters=filters, session=session, pagination=pagination
         )
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing read or read_all permission on order")
 
 
@@ -40,6 +45,7 @@ async def add_one_order(
         values_dict["user_id"] = access.user_id
         return await OrderDAO.add_one(session=session, values=values_dict)
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing create permission on order")
 
 
@@ -61,10 +67,12 @@ async def update_one_order(
             return await OrderDAO.update_one(
                 model_id=order_id, session=session, values=filters_dict
             )
+        logger.error("PermissionDenied")
         raise PermissionDenied(
             custom_detail="Missing update or update_all permission on order"
         )
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing update or update_all permission on order"
     )
@@ -82,10 +90,12 @@ async def delete_one_order(
 
         if access.user_id == order.user_id:
             return await OrderDAO.delete_one_by_id(model_id=order_id, session=session)
+        logger.error("PermissionDenied")
         raise PermissionDenied(
             custom_detail="Missing delete or delete_all permission on order"
         )
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing delete or delete_all permission on order"
     )

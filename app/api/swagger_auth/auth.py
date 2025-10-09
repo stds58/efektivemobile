@@ -16,7 +16,7 @@ swagger_router = APIRouter(prefix="/auth", tags=["auth"])
 @swagger_router.post("/swaggerlogin", response_model=Token)
 async def swaggerlogin_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    session: AsyncSession = Depends(connection()),
+    session: AsyncSession = Depends(connection(isolation_level="READ COMMITTED")),
 ) -> Token:
     return await authenticate_user_swagger(user_in=form_data, session=session)
 

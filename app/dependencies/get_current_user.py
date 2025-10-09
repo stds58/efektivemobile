@@ -20,38 +20,28 @@ logger = structlog.get_logger()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
 
 
+
 async def get_current_user(
-    request: Request,
     token: Annotated[str, Depends(oauth2_scheme)],
-    db: AsyncSession = Depends(connection()),
+    session: AsyncSession = Depends(connection()),
 ) -> User:
     try:
         if token in token_blacklist:
-            logger.error("Токен в чёрном списке")
             raise BlacklistedError
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id = payload.get("sub")
         if user_id is None:
-            logger.error("в токене отсутствует user_id")
             raise BadCredentialsError
     except InvalidTokenError as exc:
-        logger.error("Невалидный токен", error=str(exc))
         raise BadCredentialsError from exc
 
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-    user = await get_user_by_id(access=access, user_id=user_id, session=db)
+    user = await get_user_by_id(access=access, user_id=user_id, session=session)
     if user is None:
-        logger.error("в БД отсутствует user_id", user_id=user_id)
         raise BadCredentialsError
     if not user.is_active:
-        logger.error("пользователь отключён", user_id=user_id)
         raise UserInactiveError
-
-    #Сохраняем user_id в request.state
-    request.state.user_id = user.id
-    request.state.user_email = user.email
-
     return user

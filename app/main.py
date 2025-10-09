@@ -84,8 +84,6 @@ app.add_middleware(
 )
 
 
-
-
 app.include_router(v1_router)
 app.include_router(swagger_router)
 
