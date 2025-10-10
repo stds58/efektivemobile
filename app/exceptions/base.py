@@ -95,6 +95,11 @@ class DatabaseConnectionException(CustomHTTPException):
     detail = "Сервис базы данных временно недоступен"
 
 
+class SerializationFailureException(CustomHTTPException):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "Serialization failure (40001), should retry transaction"
+
+
 class SqlalchemyErrorException(CustomInternalServerException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Ошибка базы данных"

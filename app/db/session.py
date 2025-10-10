@@ -27,16 +27,7 @@ async def get_session_with_isolation(
 ):
     try:
         async with session_factory() as session:
-            logger.info("Текущий уровень изоляции", isolation_level=isolation_level)
-            # if isolation_level:
-            #     await session.connection(
-            #         execution_options={"isolation_level": isolation_level}
-            #     )
-            #     # Проверяем уровень изоляции
-            #     result = await session.execute(
-            #         text("SHOW TRANSACTION ISOLATION LEVEL;")
-            #     )
-            #     current_isolation_level = result.scalar()
+            #logger.info("Текущий уровень изоляции", isolation_level=isolation_level)
             yield session
     # except (FastAPIHTTPException, StarletteHTTPException) as exc:
     #     logger.error(

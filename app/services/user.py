@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
+from app.core.enums import BusinessDomain
 from app.core.security import get_password_hash
 from app.crud.role import RoleDAO
 from app.models import User
@@ -27,6 +28,7 @@ from app.schemas.user import (
     UserHashPassword,
 )
 from app.services.auth_service import AuthService
+from app.services.base_scoped_operations import find_many_scoped
 from app.exceptions.base import (
     BadCredentialsError,
     EmailAlreadyRegisteredError,
@@ -40,23 +42,21 @@ logger = structlog.get_logger()
 
 
 async def find_many_user(
-    access: AccessContext,
-    filters: SchemaUserFilter,
-    session: AsyncSession,
-    pagination: PaginationParams,
+        business_element: BusinessDomain,
+        access: AccessContext,
+        filters: SchemaUserFilter,
+        session: AsyncSession,
+        pagination: PaginationParams
 ) -> Optional[User]:
-    if "read_all_permission" in access.permissions:
-        return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
-    if "read_permission" in access.permissions:
-        if filters.id is not None and filters.id != access.user_id:
-            logger.error("PermissionDenied")
-            raise PermissionDenied(
-                custom_detail="Missing read or read_all permission on user"
-            )
-        filters.id = access.user_id
-        return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
-    logger.error("PermissionDenied")
-    raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
+    return await find_many_scoped(
+        business_element=business_element,
+        methodDAO=UserDAO,
+        access=access,
+        filters=filters,
+        session=session,
+        pagination=pagination,
+        owner_field="id"
+    )
 
 
 async def get_user_by_id(

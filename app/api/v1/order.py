@@ -1,7 +1,9 @@
+import structlog
 from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.dependencies.get_db import connection
+from app.core.enums import BusinessDomain, IsolationLevel
+from app.dependencies.get_db import connection, auth_db_context
 from app.schemas.order import (
     SchemaOrderBase,
     SchemaOrderCreate,
@@ -17,6 +19,10 @@ from app.services.order import (
 from app.dependencies.permissions import require_permission
 from app.schemas.permission import AccessContext
 from app.schemas.base import PaginationParams
+from app.schemas.permission import RequestContext
+
+
+logger = structlog.get_logger()
 
 
 router = APIRouter()
@@ -24,14 +30,25 @@ router = APIRouter()
 
 @router.get("", summary="Get orders")
 async def get_orders(
+    request_context: RequestContext = Depends(
+        auth_db_context(
+            business_element=BusinessDomain.ORDER,
+            isolation_level=IsolationLevel.REPEATABLE_READ,
+            commit=False
+        )
+    ),
     filters: SchemaOrderFilter = Depends(),
-    session: AsyncSession = Depends(connection()),
-    access: AccessContext = Depends(require_permission("order")),
     pagination: PaginationParams = Depends(),
 ):
-    return await find_many_order(
-        access=access, filters=filters, session=session, pagination=pagination
+    order = await find_many_order(
+        business_element=BusinessDomain.ORDER,
+        session=request_context.session,
+        access=request_context.access,
+        filters=filters,
+        pagination=pagination,
     )
+    logger.info("Get orders", filters=filters, pagination=pagination)
+    return order
 
 
 @router.post("", summary="Create order")

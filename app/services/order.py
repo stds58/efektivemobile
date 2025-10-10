@@ -1,10 +1,12 @@
 import structlog
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.enums import BusinessDomain
 from app.crud.order import OrderDAO
 from app.schemas.base import PaginationParams
 from app.schemas.order import SchemaOrderCreate, SchemaOrderFilter, SchemaOrderPatch
 from app.schemas.permission import AccessContext
+from app.services.base_scoped_operations import find_many_scoped
 from app.exceptions.base import PermissionDenied
 
 
@@ -12,29 +14,21 @@ logger = structlog.get_logger()
 
 
 async def find_many_order(
-    access: AccessContext,
-    filters: SchemaOrderFilter,
-    session: AsyncSession,
-    pagination: PaginationParams,
+        business_element: BusinessDomain,
+        access: AccessContext,
+        filters: SchemaOrderFilter,
+        session: AsyncSession,
+        pagination: PaginationParams,
 ):
-    if "read_all_permission" in access.permissions:
-        return await OrderDAO.find_many(
-            filters=filters, session=session, pagination=pagination
-        )
-
-    if "read_permission" in access.permissions:
-        if filters.user_id is not None and filters.user_id != access.user_id:
-            logger.error("PermissionDenied")
-            raise PermissionDenied(
-                custom_detail="Missing read or read_all permission on order"
-            )
-        filters.user_id = access.user_id
-        return await OrderDAO.find_many(
-            filters=filters, session=session, pagination=pagination
-        )
-
-    logger.error("PermissionDenied")
-    raise PermissionDenied(custom_detail="Missing read or read_all permission on order")
+    return await find_many_scoped(
+        business_element=business_element,
+        methodDAO=OrderDAO,
+        access=access,
+        filters=filters,
+        session=session,
+        pagination=pagination,
+        owner_field="user_id"
+    )
 
 
 async def add_one_order(

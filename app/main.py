@@ -1,4 +1,5 @@
 import structlog
+from structlog.contextvars import merge_contextvars
 from structlog.processors import CallsiteParameterAdder, CallsiteParameter
 import logging
 import sys
@@ -11,6 +12,7 @@ from app.api.v1.base_router import v1_router
 from app.api.swagger_auth.auth import swagger_router
 from app.core.config import settings
 from app.utils.importer_data import seed_all
+from app.core.structlog_configure import ordered_json_processor
 
 
 logging.basicConfig(
@@ -21,11 +23,8 @@ logging.basicConfig(
 
 structlog.configure(
     processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.stdlib.add_logger_name,
+        merge_contextvars,
         structlog.stdlib.add_log_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.dict_tracebacks,
         CallsiteParameterAdder(
             [
                 CallsiteParameter.FILENAME,
@@ -33,6 +32,11 @@ structlog.configure(
                 CallsiteParameter.LINENO,
             ]
         ),
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.dict_tracebacks,
+        ordered_json_processor,
         structlog.processors.JSONRenderer(ensure_ascii=False),
     ],
     logger_factory=structlog.stdlib.LoggerFactory(),
