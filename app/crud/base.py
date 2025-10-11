@@ -1,3 +1,4 @@
+import structlog
 from typing import ClassVar, Dict, Generic, List, Optional, TypeVar
 from uuid import UUID
 from pydantic import BaseModel as PydanticModel
@@ -8,6 +9,9 @@ from sqlalchemy.orm import DeclarativeBase
 from app.models.base import Base
 from app.schemas.base import PaginationParams
 from app.exceptions.base import MultipleResultsError, ObjectsNotFoundByIDError
+
+
+logger = structlog.get_logger()
 
 assert issubclass(Base, DeclarativeBase)
 
@@ -99,9 +103,26 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         try:
             obj = result.unique().scalars().one_or_none()
         except MultipleResultsFound as exc:
+            logger.error("MultipleResultsError", filters=filters, error=exc)
             raise MultipleResultsError from exc
         if obj is None:
             return None
+        return cls.pydantic_model.model_validate(obj, from_attributes=True)
+
+    @classmethod
+    async def find_one_by_id(
+            cls, session: AsyncSession, model_id: UUID
+    ) -> Optional[PydanticModel]:
+        obj = await session.get(cls.model, model_id)
+
+        if obj is None:
+            logger.error(
+                "ObjectsNotFoundByIDError on find_one_by_id",
+                model_id=model_id,
+                error="Запрашиваемый объект не найден"
+            )
+            raise ObjectsNotFoundByIDError
+
         return cls.pydantic_model.model_validate(obj, from_attributes=True)
 
     @classmethod
@@ -109,8 +130,8 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         """добавляет 1 запись"""
         new_instance = cls.model(**values)
         session.add(new_instance)
-        await session.flush()
-        await session.refresh(new_instance)
+        #await session.flush()
+        #await session.refresh(new_instance)
         return new_instance
 
     @classmethod
@@ -121,16 +142,18 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         obj = await session.get(cls.model, model_id)
 
         if obj is None:
+            logger.error("ObjectsNotFoundByIDError on delete", model_id=model_id, error="Запрашиваемый объект не найден")
             raise ObjectsNotFoundByIDError
 
         await session.delete(obj)
-        await session.commit()
+        #await session.commit()
         return True
 
     @classmethod
     async def delete_many_by_ids(cls, session: AsyncSession, ids: List[UUID]) -> dict:
         """Удаляет записи по списку ID. Возвращает количество удалённых строк"""
         if not ids:
+            logger.error("Запрашиваемые объекты не найдены", model_id=List[UUID])
             raise ObjectsNotFoundByIDError
 
         stmt = delete(cls.model).where(cls.model.id.in_(ids))
@@ -141,9 +164,18 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
     @classmethod
     async def update_one(
         cls, model_id: UUID, values: Dict, session: AsyncSession
-    ) -> None:
-        stmt = update(cls.model).where(cls.model.id == model_id).values(values)
-        await session.execute(stmt)
-        await session.commit()
-        obj = await session.get(cls.model, model_id)
+    ):
+        stmt = (
+            update(cls.model)
+            .where(cls.model.id == model_id)
+            .values(**values)
+            .returning(cls.model)
+        )
+        result = await session.execute(stmt)
+        obj = result.scalar_one_or_none()
+
+        if obj is None:
+            logger.error("ObjectsNotFoundByIDError on update", model_id=model_id, error="Запрашиваемый объект не найден")
+            raise ObjectsNotFoundByIDError
+
         return obj
