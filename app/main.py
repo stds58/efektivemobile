@@ -35,27 +35,26 @@ structlog.configure(
         structlog.stdlib.add_logger_name,
         structlog.stdlib.filter_by_level,
         structlog.processors.TimeStamper(fmt="iso"),
+        # structlog.stdlib.add_logger_name, добавляет поле "logger" с именем логгера (например, "__main__" или "myapp.api")
+        # structlog.stdlib.PositionalArgumentsFormatter(), обрабатывает логи вида logger.info("Hello %s", "world") - превращает в "Hello world"
+        # structlog.processors.StackInfoRenderer(), добавляет стек-трейс при вызове logger.info("msg", stack_info=True)
+        # structlog.processors.format_exc_info, если в лог передано исключение (например, logger.error("Oops", exc_info=True)), он красиво форматирует traceback
         structlog.processors.dict_tracebacks,
         ordered_json_processor,
         structlog.processors.JSONRenderer(ensure_ascii=False),
     ],
+    context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
     wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
 )
+
 
 logger = structlog.get_logger()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    if settings.ENVIRONMENT == "development":
-        await seed_all()
-    yield
-
-
 app = FastAPI(
     debug=settings.DEBUG,
-    lifespan=lifespan,
     title="API",
     version="0.1.0",
     docs_url="/api/docs",

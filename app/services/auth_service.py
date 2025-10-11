@@ -1,5 +1,5 @@
 import structlog
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 from app.core.config import settings
 from app.core.security import verify_password, get_password_hash
@@ -23,10 +23,10 @@ class AuthService:
     @staticmethod
     def create_access_token(data: dict) -> str:
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
-        to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
         encoded_jwt = jwt.encode(
             to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
         )

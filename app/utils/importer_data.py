@@ -194,35 +194,41 @@ async def seed_all():
         try:
             await seed_business_elements(session)
         except Exception as e:
-            session.rollback()
-            logger.error("Error while creating business elements", exc_info=e)
+            await session.rollback()
+            logger.error("Error while creating business elements", error=str(e))
 
         try:
             await seed_roles(session)
         except Exception as e:
-            session.rollback()
-            logger.error("Error while creating seed_roles", exc_info=e)
+            await session.rollback()
+            logger.error("Error while creating seed_roles", error=str(e))
+
+        try:
+            await seed_access_rules(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating seed_access_rules", error=str(e))
 
         try:
             await seed_users(session)
         except Exception as e:
-            session.rollback()
-            logger.error("Error while creating users", exc_info=e)
+            await session.rollback()
+            logger.error("Error while creating users", error=str(e))
 
         try:
             await seed_categories(session)
         except Exception as e:
-            session.rollback()
-            logger.error("Error while creating categories", exc_info=e)
+            await session.rollback()
+            logger.error("Error while creating categories", error=str(e))
 
         try:
             await seed_products(session)
         except Exception as e:
-            session.rollback()
-            logger.error("Error while creating products", exc_info=e)
+            await session.rollback()
+            logger.error("Error while creating products", error=str(e))
 
         try:
             await seed_orders(session)
         except Exception as e:
-            session.rollback()
-            logger.error("Error while creating orders", exc_info=e)
+            await session.rollback()
+            logger.error("Error while creating orders", error=str(e))
