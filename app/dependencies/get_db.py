@@ -25,14 +25,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
 async_session_maker = create_session_factory(settings.DATABASE_URL)
 
 
-
-
-# Рассмотри возможность отделять зависимости для чтения и записи:
-# read_context = auth_db_context(isolation_level="READ_COMMITTED", commit=False)
-# write_context = auth_db_context(isolation_level="SERIALIZABLE", commit=True)
-
-
-
 def auth_db_context(
         business_element: Optional[BusinessDomain] = None,
         isolation_level: Optional[str] = IsolationLevel.READ_COMMITTED,
@@ -109,23 +101,23 @@ def connection(isolation_level: Optional[str] = "READ COMMITTED", commit: bool =
                 if commit and session.in_transaction():
                     await session.commit()
             except IntegrityError as exc:
-                logger.critical("IntegrityError", error=str(exc))
+                logger.error("IntegrityError", error=str(exc))
                 if session.in_transaction():
                     await session.rollback()
                 raise IntegrityErrorException from exc
             except OperationalError as exc:
-                logger.critical("OperationalError", error=str(exc))
+                logger.error("OperationalError", error=str(exc))
                 raise DatabaseConnectionException from exc
             except (ConnectionRefusedError, OSError) as exc:
-                logger.critical("ConnectionRefusedError, OSError", error=str(exc))
+                logger.error("ConnectionRefusedError, OSError", error=str(exc))
                 raise CustomInternalServerException from exc
             except SQLAlchemyError as exc:
-                logger.critical(" SQLAlchemyError", error=str(exc))
+                logger.error(" SQLAlchemyError", error=str(exc))
                 if session.in_transaction():
                     await session.rollback()
                 raise SqlalchemyErrorException from exc
             except Exception as exc:
-                logger.critical("Other exception", error=str(exc))
+                logger.error("Other exception", error=str(exc))
                 if session.in_transaction():
                     await session.rollback()
                 raise

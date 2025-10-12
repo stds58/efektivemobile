@@ -1,7 +1,6 @@
 import structlog
 from uuid import UUID
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.dependencies.get_db import auth_db_context
 from app.schemas.category import (
@@ -16,7 +15,6 @@ from app.services.category import (
     update_one_category,
     delete_one_category,
 )
-from app.dependencies.permissions import require_permission
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
 
