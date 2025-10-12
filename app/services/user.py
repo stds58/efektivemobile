@@ -1,6 +1,6 @@
-import structlog
 from typing import Optional, List
 from uuid import UUID, uuid4
+import structlog
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
@@ -42,11 +42,11 @@ logger = structlog.get_logger()
 
 
 async def find_many_user(
-        business_element: BusinessDomain,
-        access: AccessContext,
-        filters: SchemaUserFilter,
-        session: AsyncSession,
-        pagination: PaginationParams
+    business_element: BusinessDomain,
+    access: AccessContext,
+    filters: SchemaUserFilter,
+    session: AsyncSession,
+    pagination: PaginationParams,
 ) -> Optional[User]:
     return await find_many_scoped(
         business_element=business_element,
@@ -55,7 +55,7 @@ async def find_many_user(
         filters=filters,
         session=session,
         pagination=pagination,
-        owner_field="id"
+        owner_field="id",
     )
 
 
@@ -127,7 +127,9 @@ async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncS
 
 async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
     fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission", "create_permission"])
+    access = AccessContext(
+        user_id=fake_uuid, permissions=["read_all_permission", "create_permission"]
+    )
     existing_user = await get_user_by_email(
         access=access, email=user_in.email, session=session
     )
@@ -144,8 +146,10 @@ async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
         raise PasswordMismatchError
     user = await UserDAO.add_one(session=session, values=values_dict)
 
-    #назначение роли user новому пользователю
-    role_user = await RoleDAO.find_one(session=session, filters=SchemaRoleFilter(name="user"))
+    # назначение роли user новому пользователю
+    role_user = await RoleDAO.find_one(
+        session=session, filters=SchemaRoleFilter(name="user")
+    )
     data = SchemaUserRolesCreate(user_id=user.id, role_id=role_user.id)
     await add_role_to_user(data=data, access=access, session=session)
 
@@ -317,7 +321,7 @@ async def get_all_user_roles(
     )
 
 
-async def ensureUserIsActive(user_id: UUID, session: AsyncSession) -> bool:
+async def ensure_user_is_active(user_id: UUID, session: AsyncSession) -> bool:
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
     user = await get_user_by_id(access=access, user_id=user_id, session=session)

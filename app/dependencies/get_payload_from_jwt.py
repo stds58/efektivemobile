@@ -1,13 +1,12 @@
+from typing import List
+from uuid import UUID
 import structlog
-from typing import Annotated, List
-from uuid import UUID, uuid4
-from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from app.services.auth_service import AuthService
-from app.schemas.permission import AccessContext
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.user import get_user_by_id, ensureUserIsActive
 from app.crud.user import UserDAO
+from app.services.auth_service import AuthService
+from app.services.user import ensure_user_is_active
+from app.schemas.permission import AccessContext
 
 
 logger = structlog.get_logger()
@@ -21,7 +20,7 @@ async def get_user_id_from_jwt(
 ) -> UUID:
     payload = AuthService.decode_access_token(token=token)
     user_id = payload.sub
-    await ensureUserIsActive(user_id=user_id, session=session)
+    await ensure_user_is_active(user_id=user_id, session=session)
     return user_id
 
 
@@ -33,7 +32,9 @@ def get_roles_from_jwt(
     return list_permissions
 
 
-async def get_payload_from_jwt(token: str, business_element: str, session: AsyncSession):
+async def get_payload_from_jwt(
+    token: str, business_element: str, session: AsyncSession
+):
     user_id = await get_user_id_from_jwt(token=token, session=session)
     list_permissions = await UserDAO.get_with_permissions(
         user_id=user_id,

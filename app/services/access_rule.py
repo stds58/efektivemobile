@@ -1,5 +1,5 @@
-import structlog
 from uuid import UUID
+import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.access_rule import AccessRuleDAO
 from app.schemas.base import PaginationParams

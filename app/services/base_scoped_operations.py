@@ -1,6 +1,6 @@
-import structlog
 from typing import Any, Awaitable, Callable
 from uuid import UUID
+import structlog
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import BusinessDomain
@@ -13,13 +13,13 @@ logger = structlog.get_logger()
 
 
 async def find_many_scoped(
-        business_element: BusinessDomain,
-        methodDAO: Callable[..., Awaitable[Any]],
-        access: AccessContext,
-        filters: BaseModel,
-        session: AsyncSession,
-        pagination: PaginationParams,
-        owner_field: str
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    filters: BaseModel,
+    session: AsyncSession,
+    pagination: PaginationParams,
+    owner_field: str,
 ):
     custom_detail = f"Missing read or read_all permission on {business_element.value}"
 
@@ -51,11 +51,11 @@ async def find_many_scoped(
 
 
 async def add_one_scoped(
-        business_element: BusinessDomain,
-        methodDAO: Callable[..., Awaitable[Any]],
-        access: AccessContext,
-        data: BaseModel,
-        session: AsyncSession,
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    data: BaseModel,
+    session: AsyncSession,
 ):
     if "create_permission" in access.permissions:
         logger.info("create_permission")
@@ -69,14 +69,16 @@ async def add_one_scoped(
 
 
 async def update_one_scoped(
-        business_element: BusinessDomain,
-        methodDAO: Callable[..., Awaitable[Any]],
-        access: AccessContext,
-        data: BaseModel,
-        session: AsyncSession,
-        business_element_id: UUID
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    data: BaseModel,
+    session: AsyncSession,
+    business_element_id: UUID,
 ):
-    custom_detail = f"Missing update or update_all permission on {business_element.value}"
+    custom_detail = (
+        f"Missing update or update_all permission on {business_element.value}"
+    )
     filters_dict = data.model_dump(exclude_unset=True)
 
     if "update_all_permission" in access.permissions:
@@ -86,7 +88,9 @@ async def update_one_scoped(
         )
 
     if "update_permission" in access.permissions:
-        obj = await methodDAO.find_one_by_id(session=session, model_id=business_element_id)
+        obj = await methodDAO.find_one_by_id(
+            session=session, model_id=business_element_id
+        )
 
         if access.user_id == obj.user_id:
             logger.info("update_permission")
@@ -101,23 +105,31 @@ async def update_one_scoped(
 
 
 async def delete_one_scoped(
-        business_element: BusinessDomain,
-        methodDAO: Callable[..., Awaitable[Any]],
-        access: AccessContext,
-        session: AsyncSession,
-        business_element_id: UUID
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    session: AsyncSession,
+    business_element_id: UUID,
 ):
-    custom_detail = f"Missing delete or delete_all permission on {business_element.value}"
+    custom_detail = (
+        f"Missing delete or delete_all permission on {business_element.value}"
+    )
     if "delete_all_permission" in access.permissions:
         logger.info("delete_all_permission")
-        return await methodDAO.delete_one_by_id(model_id=business_element_id, session=session)
+        return await methodDAO.delete_one_by_id(
+            model_id=business_element_id, session=session
+        )
 
     if "delete_permission" in access.permissions:
-        obj = await methodDAO.find_one_by_id(session=session, model_id=business_element_id)
+        obj = await methodDAO.find_one_by_id(
+            session=session, model_id=business_element_id
+        )
 
         if access.user_id == obj.user_id:
             logger.info("delete_permission")
-            return await methodDAO.delete_one_by_id(model_id=business_element_id, session=session)
+            return await methodDAO.delete_one_by_id(
+                model_id=business_element_id, session=session
+            )
         logger.error("PermissionDenied", error=custom_detail)
         raise PermissionDenied(custom_detail=custom_detail)
 

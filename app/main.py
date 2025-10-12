@@ -11,8 +11,9 @@ from app.core.structlog_configure import configure_logging
 
 
 # Подавляем логи Uvicorn (оставляем только ошибки или полностью отключаем)
-logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+if not settings.DEBUG:
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
 
 configure_logging()
 logger = structlog.get_logger()

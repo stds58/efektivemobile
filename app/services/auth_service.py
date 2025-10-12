@@ -1,11 +1,11 @@
-import structlog
 from datetime import datetime, timedelta, timezone
 import jwt
+import structlog
 from app.core.config import settings
 from app.core.security import verify_password, get_password_hash
 from app.exceptions.base import BlacklistedError, TokenExpiredError
 from app.core.blacklist import token_blacklist
-from app.schemas.token import Token, AccessToken, RefreshToken
+from app.schemas.token import AccessToken, RefreshToken
 
 
 logger = structlog.get_logger()

@@ -1,10 +1,22 @@
+"""
+structlog.stdlib.add_logger_name,
+    добавляет поле "logger" с именем логгера
+    (например, "__main__" или "myapp.api")
+structlog.stdlib.PositionalArgumentsFormatter(),
+    обрабатывает логи вида logger.info("Hello %s", "world") - превращает в "Hello world"
+structlog.processors.StackInfoRenderer(),
+    добавляет стек-трейс при вызове logger.info("msg", stack_info=True)
+structlog.processors.format_exc_info,
+    если в лог передано исключение (например, logger.error("Oops", exc_info=True)),
+    он красиво форматирует traceback
+"""
+
 import os
-import structlog
-from structlog.contextvars import merge_contextvars
-from structlog.processors import CallsiteParameterAdder, CallsiteParameter
-import logging
 import sys
-from contextlib import asynccontextmanager
+import logging
+import structlog
+from structlog.processors import CallsiteParameterAdder, CallsiteParameter
+from structlog.contextvars import merge_contextvars
 
 
 def ordered_json_processor(logger, method_name, event_dict):
@@ -36,7 +48,6 @@ def ordered_json_processor(logger, method_name, event_dict):
         "func_name",
         "lineno",
         "worker_pid",
-
     ]
 
     # Создаём упорядоченный словарь
@@ -81,10 +92,6 @@ def configure_logging():
             structlog.stdlib.filter_by_level,
             structlog.processors.TimeStamper(fmt="iso"),
             add_worker_pid,  # PID воркера
-            # structlog.stdlib.add_logger_name, добавляет поле "logger" с именем логгера (например, "__main__" или "myapp.api")
-            # structlog.stdlib.PositionalArgumentsFormatter(), обрабатывает логи вида logger.info("Hello %s", "world") - превращает в "Hello world"
-            # structlog.processors.StackInfoRenderer(), добавляет стек-трейс при вызове logger.info("msg", stack_info=True)
-            # structlog.processors.format_exc_info, если в лог передано исключение (например, logger.error("Oops", exc_info=True)), он красиво форматирует traceback
             structlog.processors.dict_tracebacks,
             ordered_json_processor,
             structlog.processors.JSONRenderer(ensure_ascii=False),

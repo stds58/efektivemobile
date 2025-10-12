@@ -82,9 +82,9 @@ class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
             )
             result = await session.execute(stmt)
             created_at = result.scalar_one()
-        except IntegrityError:
+        except IntegrityError as exc:
             await session.rollback()
-            raise IntegrityErrorException
+            raise IntegrityErrorException from exc
 
         await session.commit()
 

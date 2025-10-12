@@ -1,24 +1,23 @@
-import structlog
 from typing import Annotated
 from uuid import uuid4
 import jwt
-from fastapi import Depends, Request
+import structlog
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from jwt.exceptions import InvalidTokenError
-from app.core.config import settings
-from app.services.user import get_user_by_id
-from app.dependencies.get_db import connection
-from app.models.user import User
-from app.exceptions.base import BadCredentialsError, UserInactiveError, BlacklistedError
 from app.core.blacklist import token_blacklist
+from app.core.config import settings
+from app.models.user import User
+from app.services.user import get_user_by_id
 from app.schemas.permission import AccessContext
+from app.dependencies.get_db import connection
+from app.exceptions.base import BadCredentialsError, UserInactiveError, BlacklistedError
 
 
 logger = structlog.get_logger()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
-
 
 
 async def get_current_user(

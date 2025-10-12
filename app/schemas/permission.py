@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-
 class SchemaPermissionBase(BaseModel):
     read_permission: Optional[bool] = False
     read_all_permission: Optional[bool] = False

@@ -1,5 +1,5 @@
-import structlog
 from uuid import UUID
+import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import BusinessDomain
 from app.crud.category import CategoryDAO
@@ -14,7 +14,7 @@ from app.services.base import (
     find_many_business_element,
     add_one_business_element,
     update_one_business_element,
-    delete_one_business_element
+    delete_one_business_element,
 )
 
 
@@ -34,31 +34,31 @@ async def find_many_category(
         access=access,
         filters=filters,
         session=session,
-        pagination=pagination
+        pagination=pagination,
     )
 
 
 async def add_one_category(
-        business_element: BusinessDomain,
-        access: AccessContext,
-        data: SchemaCategoryCreate,
-        session: AsyncSession
+    business_element: BusinessDomain,
+    access: AccessContext,
+    data: SchemaCategoryCreate,
+    session: AsyncSession,
 ):
     return await add_one_business_element(
         business_element=business_element,
         methodDAO=CategoryDAO,
         access=access,
         data=data,
-        session=session
+        session=session,
     )
 
 
 async def update_one_category(
-        business_element: BusinessDomain,
-        access: AccessContext,
-        data: SchemaCategoryPatch,
-        session: AsyncSession,
-        category_id: UUID
+    business_element: BusinessDomain,
+    access: AccessContext,
+    data: SchemaCategoryPatch,
+    session: AsyncSession,
+    category_id: UUID,
 ):
     return await update_one_business_element(
         business_element=business_element,
@@ -66,20 +66,20 @@ async def update_one_category(
         access=access,
         data=data,
         session=session,
-        business_element_id=category_id
+        business_element_id=category_id,
     )
 
 
 async def delete_one_category(
-        business_element: BusinessDomain,
-        access: AccessContext,
-        session: AsyncSession,
-        category_id: UUID
+    business_element: BusinessDomain,
+    access: AccessContext,
+    session: AsyncSession,
+    category_id: UUID,
 ):
     return await delete_one_business_element(
         business_element=business_element,
         methodDAO=CategoryDAO,
         access=access,
         session=session,
-        business_element_id=category_id
+        business_element_id=category_id,
     )

@@ -1,5 +1,5 @@
-import structlog
 from uuid import uuid4
+import structlog
 from fastapi import APIRouter, Depends, status, Body, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.permission import AccessContext
@@ -27,12 +27,12 @@ router = APIRouter()
 async def register_user(
     user_in: SchemaUserCreate, session: AsyncSession = Depends(connection())
 ):
-    filters=SchemaUserCreate(
+    filters = SchemaUserCreate(
         email=user_in.email,
         password="*****",
         password_confirm="*****",
         first_name=user_in.first_name,
-        last_name=user_in.last_name
+        last_name=user_in.last_name,
     )
     logger.info("Register user", filters=filters)
     user = await create_user(user_in=user_in, session=session)
@@ -46,13 +46,12 @@ async def login_for_access_token(
     response: Response,
     session: AsyncSession = Depends(connection()),
 ) -> Token:
-    filters = SchemaUserLogin(
-        email=form_data.email,
-        password="*****"
-    )
+    filters = SchemaUserLogin(email=form_data.email, password="*****")
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-    user = await get_user_by_email(access=access, email=form_data.email, session=session)
+    user = await get_user_by_email(
+        access=access, email=form_data.email, session=session
+    )
 
     logger.info("Login user", user_id=user.id, filters=filters)
     tokens = await authenticate_user_api(user_in=form_data, session=session)

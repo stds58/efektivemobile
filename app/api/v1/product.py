@@ -1,5 +1,5 @@
-import structlog
 from uuid import UUID
+import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.dependencies.get_db import auth_db_context
@@ -31,7 +31,7 @@ async def get_products(
         auth_db_context(
             business_element=BusinessDomain.PRODUCT,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False
+            commit=False,
         )
     ),
     filters: SchemaProductFilter = Depends(),
@@ -56,7 +56,8 @@ async def create_product(
         auth_db_context(
             business_element=BusinessDomain.PRODUCT,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True)
+            commit=True,
+        )
     ),
 ):
     logger.info("Add product", data=data)
@@ -64,13 +65,15 @@ async def create_product(
         business_element=BusinessDomain.PRODUCT,
         access=request_context.access,
         data=data,
-        session=request_context.session
+        session=request_context.session,
     )
     logger.info("Added product", data=data)
     return product
 
 
-@router.patch("/{product_id}", summary="Update product", response_model=SchemaProductBase)
+@router.patch(
+    "/{product_id}", summary="Update product", response_model=SchemaProductBase
+)
 async def edit_product(
     product_id: UUID,
     data: SchemaProductPatch,
@@ -78,7 +81,7 @@ async def edit_product(
         auth_db_context(
             business_element=BusinessDomain.PRODUCT,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True
+            commit=True,
         )
     ),
 ):
@@ -88,7 +91,7 @@ async def edit_product(
         access=request_context.access,
         data=data,
         session=request_context.session,
-        product_id=product_id
+        product_id=product_id,
     )
     logger.info("Updated product", data=data, model_id=product_id)
     return updated_product
@@ -103,7 +106,7 @@ async def delete_product(
         auth_db_context(
             business_element=BusinessDomain.PRODUCT,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True
+            commit=True,
         )
     ),
 ):
@@ -112,7 +115,7 @@ async def delete_product(
         business_element=BusinessDomain.PRODUCT,
         access=request_context.access,
         session=request_context.session,
-        product_id=product_id
+        product_id=product_id,
     )
     logger.info("Deleted product", model_id=product_id)
     return

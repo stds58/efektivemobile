@@ -2,14 +2,12 @@
 Контекстный менеджер для создания сессии с опциональным уровнем изоляции.
 Для гибкого управления уровнем изоляции
 """
-import structlog
-from contextlib import asynccontextmanager
+
 from typing import Optional
 import asyncio
-#from fastapi import HTTPException as FastAPIHTTPException
-from sqlalchemy import text
+from contextlib import asynccontextmanager
+import structlog
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-#from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 logger = structlog.get_logger()
@@ -27,20 +25,11 @@ async def get_session_with_isolation(
 ):
     try:
         async with session_factory() as session:
-            #logger.info("Текущий уровень изоляции", isolation_level=isolation_level)
+            # logger.info("Текущий уровень изоляции", isolation_level=isolation_level)
             yield session
-    # except (FastAPIHTTPException, StarletteHTTPException) as exc:
-    #     logger.error(
-    #         "Ошибка (FastAPIHTTPException, StarletteHTTPException)",
-    #         error=str(exc)
-    #     )
-    #     raise
     except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as exc:
         logger.error(
             "Ошибка (ConnectionRefusedError, OSError, asyncio.TimeoutError)",
-            error=str(exc)
+            error=str(exc),
         )
         raise
-    # except Exception as exc:
-    #     logger.error("Неожиданная ошибка при создании сессии", error=str(exc))
-    #     raise

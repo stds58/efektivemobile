@@ -24,7 +24,7 @@ async def auth_logging_middleware(request: Request, call_next):
 
     response = await call_next(request)
 
-    #bind_contextvars(status=response.status_code)
+    # bind_contextvars(status=response.status_code)
 
     # Логируем ТОЛЬКО успешные авторизованные запросы (2xx, 3xx)
     # if 200 <= response.status_code < 400:

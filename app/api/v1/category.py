@@ -1,5 +1,5 @@
-import structlog
 from uuid import UUID
+import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.dependencies.get_db import auth_db_context
@@ -30,7 +30,7 @@ async def get_categorys(
         auth_db_context(
             business_element=BusinessDomain.CATEGORY,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False
+            commit=False,
         )
     ),
     filters: SchemaCategoryFilter = Depends(),
@@ -55,7 +55,8 @@ async def create_category(
         auth_db_context(
             business_element=BusinessDomain.CATEGORY,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True)
+            commit=True,
+        )
     ),
 ):
     logger.info("Add category", data=data)
@@ -63,13 +64,15 @@ async def create_category(
         business_element=BusinessDomain.CATEGORY,
         access=request_context.access,
         data=data,
-        session=request_context.session
+        session=request_context.session,
     )
     logger.info("Added category", data=data)
     return category
 
 
-@router.patch("/{category_id}", summary="Update category", response_model=SchemaCategoryBase)
+@router.patch(
+    "/{category_id}", summary="Update category", response_model=SchemaCategoryBase
+)
 async def edit_product(
     category_id: UUID,
     data: SchemaCategoryPatch,
@@ -77,7 +80,7 @@ async def edit_product(
         auth_db_context(
             business_element=BusinessDomain.CATEGORY,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True
+            commit=True,
         )
     ),
 ):
@@ -87,7 +90,7 @@ async def edit_product(
         access=request_context.access,
         data=data,
         session=request_context.session,
-        category_id=category_id
+        category_id=category_id,
     )
     logger.info("Updated category", data=data, model_id=category_id)
     return updated_category
@@ -102,7 +105,7 @@ async def delete_category(
         auth_db_context(
             business_element=BusinessDomain.CATEGORY,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True
+            commit=True,
         )
     ),
 ):
@@ -111,7 +114,7 @@ async def delete_category(
         business_element=BusinessDomain.CATEGORY,
         access=request_context.access,
         session=request_context.session,
-        category_id=category_id
+        category_id=category_id,
     )
     logger.info("Deleted category", model_id=category_id)
     return

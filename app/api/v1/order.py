@@ -1,5 +1,5 @@
-import structlog
 from uuid import UUID
+import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.dependencies.get_db import auth_db_context
@@ -24,7 +24,7 @@ logger = structlog.get_logger()
 
 router = APIRouter()
 
-owner_field = "user_id"
+OWNER_FIELD = "user_id"
 
 
 @router.get("", summary="Get orders")
@@ -33,21 +33,25 @@ async def get_orders(
         auth_db_context(
             business_element=BusinessDomain.ORDER,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False
+            commit=False,
         )
     ),
     filters: SchemaOrderFilter = Depends(),
     pagination: PaginationParams = Depends(),
 ):
-    logger.info("Get orders", owner_field=owner_field, filters=filters, pagination=pagination)
+    logger.info(
+        "Get orders", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+    )
     order = await find_many_order(
         business_element=BusinessDomain.ORDER,
         access=request_context.access,
         filters=filters,
         session=request_context.session,
-        pagination=pagination
+        pagination=pagination,
     )
-    logger.info("Geted orders", owner_field=owner_field, filters=filters, pagination=pagination)
+    logger.info(
+        "Geted orders", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+    )
     return order
 
 
@@ -58,7 +62,8 @@ async def create_order(
         auth_db_context(
             business_element=BusinessDomain.ORDER,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True)
+            commit=True,
+        )
     ),
 ):
     logger.info("Add order", data=data)
@@ -66,7 +71,7 @@ async def create_order(
         business_element=BusinessDomain.ORDER,
         access=request_context.access,
         data=data,
-        session=request_context.session
+        session=request_context.session,
     )
     logger.info("Added order", data=data)
     return order
@@ -80,7 +85,7 @@ async def edit_order(
         auth_db_context(
             business_element=BusinessDomain.ORDER,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True
+            commit=True,
         )
     ),
 ):
@@ -90,7 +95,7 @@ async def edit_order(
         access=request_context.access,
         data=data,
         session=request_context.session,
-        order_id=order_id
+        order_id=order_id,
     )
     logger.info("Updated order", data=data, model_id=order_id)
     return updated_order
@@ -105,7 +110,7 @@ async def delete_product(
         auth_db_context(
             business_element=BusinessDomain.ORDER,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True
+            commit=True,
         )
     ),
 ):
@@ -114,7 +119,7 @@ async def delete_product(
         business_element=BusinessDomain.ORDER,
         access=request_context.access,
         session=request_context.session,
-        order_id=order_id
+        order_id=order_id,
     )
     logger.info("Deleted order", model_id=order_id)
     return

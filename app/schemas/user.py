@@ -1,7 +1,7 @@
-import structlog
 from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
+import structlog
 from pydantic import (
     BaseModel,
     EmailStr,

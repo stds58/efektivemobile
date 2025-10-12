@@ -1,6 +1,6 @@
-import structlog
-from uuid import UUID
 from typing import List
+from uuid import UUID
+import structlog
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import BusinessDomain, IsolationLevel
@@ -25,7 +25,7 @@ async def get_users(
         auth_db_context(
             business_element=BusinessDomain.USER,
             isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False
+            commit=False,
         )
     ),
     filters: SchemaUserFilter = Depends(),
