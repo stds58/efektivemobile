@@ -1,3 +1,12 @@
+import os
+import structlog
+from structlog.contextvars import merge_contextvars
+from structlog.processors import CallsiteParameterAdder, CallsiteParameter
+import logging
+import sys
+from contextlib import asynccontextmanager
+
+
 def ordered_json_processor(logger, method_name, event_dict):
     """
     Формирует event_dict с фиксированным порядком ключей.
@@ -26,6 +35,7 @@ def ordered_json_processor(logger, method_name, event_dict):
         "filename",
         "func_name",
         "lineno",
+        "worker_pid",
 
     ]
 
@@ -42,3 +52,45 @@ def ordered_json_processor(logger, method_name, event_dict):
     ordered.update(event_dict)
 
     return ordered
+
+
+def add_worker_pid(logger, method_name, event_dict):
+    event_dict["worker_pid"] = os.getpid()
+    return event_dict
+
+
+def configure_logging():
+    logging.basicConfig(
+        format="%(message)s",
+        stream=sys.stdout,
+        level=logging.INFO,
+    )
+
+    structlog.configure(
+        processors=[
+            merge_contextvars,
+            structlog.stdlib.add_log_level,
+            CallsiteParameterAdder(
+                [
+                    CallsiteParameter.FILENAME,
+                    CallsiteParameter.FUNC_NAME,
+                    CallsiteParameter.LINENO,
+                ]
+            ),
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.filter_by_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            add_worker_pid,  # PID воркера
+            # structlog.stdlib.add_logger_name, добавляет поле "logger" с именем логгера (например, "__main__" или "myapp.api")
+            # structlog.stdlib.PositionalArgumentsFormatter(), обрабатывает логи вида logger.info("Hello %s", "world") - превращает в "Hello world"
+            # structlog.processors.StackInfoRenderer(), добавляет стек-трейс при вызове logger.info("msg", stack_info=True)
+            # structlog.processors.format_exc_info, если в лог передано исключение (например, logger.error("Oops", exc_info=True)), он красиво форматирует traceback
+            structlog.processors.dict_tracebacks,
+            ordered_json_processor,
+            structlog.processors.JSONRenderer(ensure_ascii=False),
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )

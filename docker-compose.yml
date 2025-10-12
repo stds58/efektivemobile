@@ -6,6 +6,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    environment:
+      DB_HOST: "db"
+      DEBUG: "false"
     env_file:
       - path: .env
         required: true
@@ -89,6 +92,16 @@ services:
     networks:
       devops_mynetwork:
         ipv4_address: 172.21.0.7
+
+  kibana-init:
+    container_name: kibana-init
+    build: ./kibana-init
+    depends_on:
+      kibana:
+        condition: service_started
+    networks:
+      devops_mynetwork:
+        ipv4_address: 172.21.0.8
 
 volumes:
   pg_data:
