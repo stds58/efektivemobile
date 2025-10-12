@@ -1,3 +1,4 @@
+import structlog
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.get_current_user import get_current_user
@@ -5,6 +6,9 @@ from app.dependencies.get_db import connection
 from app.models.user import User
 from app.crud.user import UserDAO
 from app.schemas.permission import AccessContext
+
+
+logger = structlog.get_logger()
 
 
 def require_permission(business_element: str):
@@ -16,6 +20,11 @@ def require_permission(business_element: str):
             user_id=current_user.id,
             business_element_name=business_element,
             session=session,
+        )
+        logger.info(
+            "get user with list permissions",
+            user_id=current_user.id,
+            list_permissions=list_permissions,
         )
 
         return AccessContext(user_id=current_user.id, permissions=list_permissions)

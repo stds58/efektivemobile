@@ -1,3 +1,4 @@
+import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models import Role, BusinessElement, AccessRule, User, Category, Product, Order
@@ -14,6 +15,8 @@ from app.core.security import get_password_hash
 from app.core.config import settings
 from app.db.session import create_session_factory
 
+
+logger = structlog.get_logger()
 
 async_session_maker = create_session_factory(settings.DATABASE_URL)
 
@@ -188,10 +191,44 @@ async def seed_orders(session: AsyncSession):
 
 async def seed_all():
     async with async_session_maker() as session:
-        await seed_business_elements(session)
-        await seed_roles(session)
-        await seed_access_rules(session)
-        await seed_users(session)
-        await seed_categories(session)
-        await seed_products(session)
-        await seed_orders(session)
+        try:
+            await seed_business_elements(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating business elements", error=str(e))
+
+        try:
+            await seed_roles(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating seed_roles", error=str(e))
+
+        try:
+            await seed_access_rules(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating seed_access_rules", error=str(e))
+
+        try:
+            await seed_users(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating users", error=str(e))
+
+        try:
+            await seed_categories(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating categories", error=str(e))
+
+        try:
+            await seed_products(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating products", error=str(e))
+
+        try:
+            await seed_orders(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while creating orders", error=str(e))

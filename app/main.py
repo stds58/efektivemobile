@@ -1,23 +1,26 @@
-from contextlib import asynccontextmanager
+import logging
+import structlog
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.middleware.auth_logging_middleware import auth_logging_middleware
 from app.api.v1.base_router import v1_router
 from app.api.swagger_auth.auth import swagger_router
 from app.core.config import settings
-from app.utils.importer_data import seed_all
+from app.core.structlog_configure import configure_logging
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    if settings.ENVIRONMENT == "development":
-        await seed_all()
-    yield
+# Подавляем логи Uvicorn (оставляем только ошибки или полностью отключаем)
+if not settings.DEBUG:
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+
+configure_logging()
+logger = structlog.get_logger()
 
 
 app = FastAPI(
     debug=settings.DEBUG,
-    lifespan=lifespan,
     title="API",
     version="0.1.0",
     docs_url="/api/docs",
@@ -28,6 +31,8 @@ app = FastAPI(
 app.add_middleware(
     SessionMiddleware, secret_key=settings.SESSION_MIDDLEWARE_SECRET_KEY, max_age=3600
 )
+
+app.middleware("http")(auth_logging_middleware)
 
 app.add_middleware(
     CORSMiddleware,

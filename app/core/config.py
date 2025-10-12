@@ -2,11 +2,10 @@
 Класс настроек приложения
 """
 
-import secrets
 from functools import lru_cache
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict
 
 
 load_dotenv()
@@ -20,7 +19,7 @@ class Settings(BaseSettings):
     APP_NAME: str
     ENVIRONMENT: str
     DEBUG: bool
-    SECRET_KEY: str = Field(default_factory=lambda: Settings._generate_secret_key())
+    SECRET_KEY: str
     SESSION_MIDDLEWARE_SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_HOURS: int
@@ -35,14 +34,15 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:  # pylint: disable=invalid-name
+        if settings.DEBUG:
+            return (
+                f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"
+                f"{settings.DB_HOST}:{settings.DB_PORT_EXTERNAL}/{settings.DB_NAME}"
+            )
         return (
             f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"
             f"{settings.DB_HOST}:{settings.DB_PORT_INTERNAL}/{settings.DB_NAME}"
         )
-
-    @staticmethod
-    def _generate_secret_key() -> str:
-        return secrets.token_urlsafe(64)
 
     model_config = ConfigDict(extra="ignore")
 

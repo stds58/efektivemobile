@@ -1,8 +1,10 @@
 from typing import Optional, List
 from uuid import UUID, uuid4
+import structlog
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
+from app.core.enums import BusinessDomain
 from app.core.security import get_password_hash
 from app.crud.role import RoleDAO
 from app.models import User
@@ -26,6 +28,7 @@ from app.schemas.user import (
     UserHashPassword,
 )
 from app.services.auth_service import AuthService
+from app.services.base_scoped_operations import find_many_scoped
 from app.exceptions.base import (
     BadCredentialsError,
     EmailAlreadyRegisteredError,
@@ -35,22 +38,25 @@ from app.exceptions.base import (
 )
 
 
+logger = structlog.get_logger()
+
+
 async def find_many_user(
+    business_element: BusinessDomain,
     access: AccessContext,
     filters: SchemaUserFilter,
     session: AsyncSession,
     pagination: PaginationParams,
 ) -> Optional[User]:
-    if "read_all_permission" in access.permissions:
-        return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
-    if "read_permission" in access.permissions:
-        if filters.id is not None and filters.id != access.user_id:
-            raise PermissionDenied(
-                custom_detail="Missing read or read_all permission on user"
-            )
-        filters.id = access.user_id
-        return await UserDAO.find_many(filters=filters, session=session, pagination=pagination)
-    raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
+    return await find_many_scoped(
+        business_element=business_element,
+        methodDAO=UserDAO,
+        access=access,
+        filters=filters,
+        session=session,
+        pagination=pagination,
+        owner_field="id",
+    )
 
 
 async def get_user_by_id(
@@ -62,6 +68,7 @@ async def get_user_by_id(
         return user
     if "read_permission" in access.permissions and user_id == access.user_id:
         return user
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
@@ -74,6 +81,7 @@ async def get_user_by_email(
         return user
     if "read_permission" in access.permissions and user.id == access.user_id:
         return user
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
 
 
@@ -94,6 +102,7 @@ async def update_user(
     elif "update_permission" in access.permissions and user_id == access.user_id:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
     else:
+        logger.error("PermissionDenied")
         raise PermissionDenied(
             custom_detail="Missing update or update_all permission on user"
         )
@@ -110,6 +119,7 @@ async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncS
     if "delete_permission" in access.permissions and user_id == access.user_id:
         await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
         return
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing delete or delete_all permission on user"
     )
@@ -117,11 +127,14 @@ async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncS
 
 async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
     fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission", "create_permission"])
+    access = AccessContext(
+        user_id=fake_uuid, permissions=["read_all_permission", "create_permission"]
+    )
     existing_user = await get_user_by_email(
         access=access, email=user_in.email, session=session
     )
     if existing_user:
+        logger.error("EmailAlreadyRegisteredError")
         raise EmailAlreadyRegisteredError
     if user_in.password == user_in.password_confirm:
         values_dict = user_in.model_dump(exclude_unset=True)
@@ -129,11 +142,14 @@ async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
         values_dict["password"] = password_hash
         values_dict.pop("password_confirm")
     else:
+        logger.error("PasswordMismatchError")
         raise PasswordMismatchError
     user = await UserDAO.add_one(session=session, values=values_dict)
 
-    #назначение роли user новому пользователю
-    role_user = await RoleDAO.find_one(session=session, filters=SchemaRoleFilter(name="user"))
+    # назначение роли user новому пользователю
+    role_user = await RoleDAO.find_one(
+        session=session, filters=SchemaRoleFilter(name="user")
+    )
     data = SchemaUserRolesCreate(user_id=user.id, role_id=role_user.id)
     await add_role_to_user(data=data, access=access, session=session)
 
@@ -186,12 +202,13 @@ async def authenticate_user(
     login = user_in.email if user_in.username is None else user_in.username
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-
     user = await get_user_by_email(access=access, email=login, session=session)
 
     if not user:
+        logger.error("в БД отсутствует user_id", user_id=user.id)
         raise BadCredentialsError
     if not user.is_active:
+        logger.error("пользователь отключён", user_id=user.id)
         raise UserInactiveError
     hash_password = await get_hash_password(user_id=user.id, session=session)
     if not AuthService.verify_password(user_in.password, hash_password):
@@ -224,6 +241,7 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
     payload = AuthService.decode_refresh_token(refresh_token)
     user_id = payload.get("sub")
     if not user_id:
+        logger.error("BadCredentialsError")
         raise BadCredentialsError
 
     fake_uuid = uuid4()
@@ -231,8 +249,10 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
     user = await get_user_by_id(access=access, user_id=UUID(user_id), session=session)
 
     if not user:
+        logger.error("BadCredentialsError")
         raise BadCredentialsError
     if not user.is_active:
+        logger.error("UserInactiveError")
         raise UserInactiveError
 
     new_access = AuthService.create_access_token({"sub": str(user.id)})
@@ -250,6 +270,7 @@ async def add_role_to_user(
         return await UserDAO.add_role_to_user(
             session=session, user_id=data.user_id, role_id=data.role_id
         )
+    logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing create_permission on user_roles")
 
 
@@ -266,10 +287,12 @@ async def remove_role_from_user(
             return await UserDAO.remove_role_from_user(
                 session=session, user_id=data.user_id, role_id=data.role_id
             )
+        logger.error("PermissionDenied")
         raise PermissionDenied(
             custom_detail="Missing delete or delete_all permission on user_roles"
         )
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing delete or delete_all permission on user_roles"
     )
@@ -285,12 +308,25 @@ async def get_all_user_roles(
 
     if "read_permission" in access.permissions:
         if filters.user_id is not None and filters.user_id != access.user_id:
+            logger.error("PermissionDenied")
             raise PermissionDenied(
                 custom_detail="Missing read or read_all permission on user_roles"
             )
         filters.user_id = access.user_id
         return UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
 
+    logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing read or read_all permission on user_roles"
     )
+
+
+async def ensure_user_is_active(user_id: UUID, session: AsyncSession) -> bool:
+    fake_uuid = uuid4()
+    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
+    user = await get_user_by_id(access=access, user_id=user_id, session=session)
+    if user is None:
+        raise BadCredentialsError
+    if not user.is_active:
+        raise UserInactiveError
+    return True

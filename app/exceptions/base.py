@@ -1,7 +1,7 @@
 import logging
 from typing import Callable, Optional
 from fastapi import HTTPException, Request, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 
 
 logger = logging.getLogger(__name__)
@@ -93,6 +93,11 @@ class ObjectsNotFoundByIDError(CustomInternalServerException):
 class DatabaseConnectionException(CustomHTTPException):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     detail = "Сервис базы данных временно недоступен"
+
+
+class SerializationFailureException(CustomHTTPException):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "Serialization failure (40001), should retry transaction"
 
 
 class SqlalchemyErrorException(CustomInternalServerException):

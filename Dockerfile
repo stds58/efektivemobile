@@ -31,7 +31,7 @@ RUN useradd -m appuser
 
 COPY . .
 
-COPY ./entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
@@ -39,4 +39,4 @@ ENTRYPOINT ["/entrypoint.sh"]
 ENV PATH="$WORKDIR/.venv/bin:$PATH"
 USER appuser
 
-CMD ["uvicorn", "app.main:app", "--workers", "4", "--host", "0.0.0.0"]
+CMD ["uvicorn", "app.main:app", "--workers", "4", "--host", "0.0.0.0", "--log-level", "warning"]

@@ -1,0 +1,137 @@
+from typing import Any, Awaitable, Callable
+from uuid import UUID
+import structlog
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.enums import BusinessDomain
+from app.schemas.base import PaginationParams
+from app.schemas.permission import AccessContext
+from app.exceptions.base import PermissionDenied
+
+
+logger = structlog.get_logger()
+
+
+async def find_many_scoped(
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    filters: BaseModel,
+    session: AsyncSession,
+    pagination: PaginationParams,
+    owner_field: str,
+):
+    custom_detail = f"Missing read or read_all permission on {business_element.value}"
+
+    if "read_all_permission" in access.permissions:
+        logger.info("read_all_permission", filters=filters, pagination=pagination)
+        return await methodDAO.find_many(
+            filters=filters, session=session, pagination=pagination
+        )
+
+    if "read_permission" in access.permissions:
+        logger.info("read_permission", filters=filters, pagination=pagination)
+        # Получаем текущее значение поля владельца из фильтров
+        current_owner_value = getattr(filters, owner_field, None)
+
+        # Если в фильтре указан владелец, и он не совпадает с текущим пользователем - ошибка
+        if current_owner_value is not None and current_owner_value != access.user_id:
+            logger.error("PermissionDenied on read_permission", error=custom_detail)
+            raise PermissionDenied(custom_detail=custom_detail)
+
+        # Устанавливаем фильтр на текущего пользователя
+        setattr(filters, owner_field, access.user_id)
+
+        return await methodDAO.find_many(
+            filters=filters, session=session, pagination=pagination
+        )
+
+    logger.error("PermissionDenied", error=custom_detail)
+    raise PermissionDenied(custom_detail=custom_detail)
+
+
+async def add_one_scoped(
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    data: BaseModel,
+    session: AsyncSession,
+):
+    if "create_permission" in access.permissions:
+        logger.info("create_permission")
+        values_dict = data.model_dump(exclude_unset=True)
+        values_dict["user_id"] = access.user_id
+        return await methodDAO.add_one(session=session, values=values_dict)
+
+    custom_detail = f"Missing create permission on {business_element.value}"
+    logger.error("PermissionDenied", error=custom_detail)
+    raise PermissionDenied(custom_detail=custom_detail)
+
+
+async def update_one_scoped(
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    data: BaseModel,
+    session: AsyncSession,
+    business_element_id: UUID,
+):
+    custom_detail = (
+        f"Missing update or update_all permission on {business_element.value}"
+    )
+    filters_dict = data.model_dump(exclude_unset=True)
+
+    if "update_all_permission" in access.permissions:
+        logger.info("update_all_permission")
+        return await methodDAO.update_one(
+            model_id=business_element_id, session=session, values=filters_dict
+        )
+
+    if "update_permission" in access.permissions:
+        obj = await methodDAO.find_one_by_id(
+            session=session, model_id=business_element_id
+        )
+
+        if access.user_id == obj.user_id:
+            logger.info("update_permission")
+            return await methodDAO.update_one(
+                model_id=business_element_id, session=session, values=filters_dict
+            )
+        logger.error("PermissionDenied", error=custom_detail)
+        raise PermissionDenied(custom_detail=custom_detail)
+
+    logger.error("PermissionDenied", error=custom_detail)
+    raise PermissionDenied(custom_detail=custom_detail)
+
+
+async def delete_one_scoped(
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    session: AsyncSession,
+    business_element_id: UUID,
+):
+    custom_detail = (
+        f"Missing delete or delete_all permission on {business_element.value}"
+    )
+    if "delete_all_permission" in access.permissions:
+        logger.info("delete_all_permission")
+        return await methodDAO.delete_one_by_id(
+            model_id=business_element_id, session=session
+        )
+
+    if "delete_permission" in access.permissions:
+        obj = await methodDAO.find_one_by_id(
+            session=session, model_id=business_element_id
+        )
+
+        if access.user_id == obj.user_id:
+            logger.info("delete_permission")
+            return await methodDAO.delete_one_by_id(
+                model_id=business_element_id, session=session
+            )
+        logger.error("PermissionDenied", error=custom_detail)
+        raise PermissionDenied(custom_detail=custom_detail)
+
+    logger.error("PermissionDenied", error=custom_detail)
+    raise PermissionDenied(custom_detail=custom_detail)

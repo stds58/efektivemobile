@@ -1,6 +1,6 @@
 from app.crud.base import BaseDAO
 from app.models.role import Role
-from app.schemas.role import SchemaRoleBase,SchemaRoleFilter
+from app.schemas.role import SchemaRoleBase, SchemaRoleFilter
 
 
 class RoleDAO(BaseDAO[Role, None, SchemaRoleFilter]):

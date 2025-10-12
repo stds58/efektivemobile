@@ -2,6 +2,7 @@ from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class SchemaPermissionBase(BaseModel):
@@ -25,6 +26,14 @@ class SchemaPermissionBase(BaseModel):
 class AccessContext(BaseModel):
     user_id: UUID
     permissions: List[str]
+
+
+class RequestContext(BaseModel):
+    session: AsyncSession
+    access: AccessContext
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class SchemaUserRolesBase(BaseModel):
