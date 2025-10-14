@@ -85,6 +85,26 @@ def logstash_processor(logger, method_name, event_dict):
     return event_dict
 
 
+def unify_log_level(logger, method_name, event_dict):
+    """
+    Унифицирует поле уровня лога в 'level'.
+    Поддерживает как 'level', так и 'severity' на входе.
+    """
+    # Если уже есть 'level' — оставляем
+    if "level" in event_dict:
+        return event_dict
+
+    # Если есть 'severity' — используем его как 'level'
+    if "severity" in event_dict:
+        # Приводим к нижнему регистру, как делает structlog по умолчанию
+        event_dict["level"] = str(event_dict.pop("severity")).lower()
+        return event_dict
+
+    # Если ничего нет — ставим 'info' (или другой уровень по умолчанию)
+    event_dict["level"] = "info"
+    return event_dict
+
+
 def configure_logging():
     logging.basicConfig(
         format="%(message)s",
@@ -96,6 +116,7 @@ def configure_logging():
         processors=[
             merge_contextvars,
             structlog.stdlib.add_log_level,
+            unify_log_level,
             CallsiteParameterAdder(
                 [
                     CallsiteParameter.FILENAME,

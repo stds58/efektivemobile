@@ -1,9 +1,10 @@
 import asyncio
 import importlib
 import pkgutil
-#from logging.config import fileConfig
-from safir.logging import configure_alembic_logging
-from safir.logging import LogLevel
+import logging
+import json
+import sys
+from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -31,13 +32,44 @@ config.set_main_option("sqlalchemy.url", sqlalchemy_url)
 # This line sets up loggers basically.
 # if config.config_file_name is not None:
 #     fileConfig(config.config_file_name)
-# Настройка логирования через structlog (вывод в JSON)
-#configure_alembic_logging()  # по умолчанию уровень — INFO
-configure_alembic_logging(log_level=LogLevel.DEBUG)
-# Далее — ваша обычная конфигурация Alembic
-config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        #print("Все поля record:", vars(record))
+        parts = []
+        if record.exc_info is not None:
+            parts.append(f"exc_info: {record.exc_info}")
+        if record.exc_text is not None:
+            parts.append(f"exc_text: {record.exc_text}")
+        if record.stack_info is not None:
+            parts.append(f"stack_info: {record.stack_info}")
 
+        # Объединяем в одну строку с переносами, если есть что объединять
+        error_str = "\n".join(parts) if parts else None
+
+        return json.dumps({
+            "path": record.pathname,
+            "timestamp": self.formatTime(record),
+            "level": record.levelname.lower(),
+            "logger": record.name,
+            "event": record.getMessage(),
+            "error": error_str,
+            "filename": record.filename,
+            "func_name": record.funcName,
+            "lineno": record.lineno
+        }, ensure_ascii=False)
+
+
+# Настраиваем логгер alembic
+alembic_logger = logging.getLogger("alembic")
+alembic_logger.setLevel(logging.DEBUG)
+
+# Убираем дублирование, если root logger тоже пишет
+alembic_logger.propagate = False
+
+# Добавляем обработчик с JSON-форматтером
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(JsonFormatter())
+alembic_logger.addHandler(handler)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
