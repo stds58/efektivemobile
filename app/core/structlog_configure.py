@@ -12,12 +12,12 @@ structlog.processors.format_exc_info,
 """
 import os
 import sys
-import orjson
 import requests
 import logging
 import structlog
 from structlog.processors import CallsiteParameterAdder, CallsiteParameter
 from structlog.contextvars import merge_contextvars
+from app.core.config import settings
 
 
 def ordered_json_processor(logger, method_name, event_dict):
@@ -72,15 +72,16 @@ def add_worker_pid(logger, method_name, event_dict):
 
 
 def logstash_processor(logger, method_name, event_dict):
-    try:
-        requests.post(
-            "http://localhost:8080",
-            data=event_dict,
-            headers={"Content-Type": "application/json"},
-            timeout=2
-        )
-    except Exception as e:
-        print("Logstash error:", e)
+    if settings.DEBUG:
+        try:
+            requests.post(
+                "http://localhost:8080",
+                data=event_dict,
+                headers={"Content-Type": "application/json"},
+                timeout=2
+            )
+        except Exception as e:
+            print("Logstash error:", e)
     return event_dict
 
 

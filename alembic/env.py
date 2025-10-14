@@ -1,7 +1,9 @@
 import asyncio
 import importlib
 import pkgutil
-from logging.config import fileConfig
+#from logging.config import fileConfig
+from safir.logging import configure_alembic_logging
+from safir.logging import LogLevel
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -15,7 +17,7 @@ def import_all_models(package_name: str):
     for _, name, _ in pkgutil.walk_packages(package.__path__, package_name + "."):
         if "models" in name:
             importlib.import_module(name)
-            print("Tables in Base.metadata:", Base.metadata.tables.keys())
+            #print("Tables in Base.metadata:", Base.metadata.tables.keys())
 
 
 import_all_models("app")
@@ -27,8 +29,15 @@ sqlalchemy_url = settings.DATABASE_URL
 config.set_main_option("sqlalchemy.url", sqlalchemy_url)
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+# if config.config_file_name is not None:
+#     fileConfig(config.config_file_name)
+# Настройка логирования через structlog (вывод в JSON)
+#configure_alembic_logging()  # по умолчанию уровень — INFO
+configure_alembic_logging(log_level=LogLevel.DEBUG)
+# Далее — ваша обычная конфигурация Alembic
+config = context.config
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
 
 # add your model's MetaData object here
 # for 'autogenerate' support

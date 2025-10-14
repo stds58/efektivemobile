@@ -16,6 +16,7 @@ if not settings.DEBUG:
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
 
+
 configure_logging()
 logger = structlog.get_logger()
 
