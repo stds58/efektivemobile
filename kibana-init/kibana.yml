@@ -1,3 +1,0 @@
-xpack.security.encryptionKey: "a_secure_random_string_32_chars_long"
-xpack.encryptedSavedObjects.encryptionKey: "another_secure_random_string_32_chars"
-xpack.reporting.encryptionKey: "yet_another_secure_random_string_32_chars"

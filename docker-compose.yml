@@ -24,7 +24,7 @@ services:
         condition: service_started
     networks:
       devops_mynetwork:
-        ipv4_address: 172.21.0.3
+        ipv4_address: 172.21.0.2
     restart: unless-stopped
 
   db:
@@ -48,138 +48,12 @@ services:
       retries: 10
     networks:
       devops_mynetwork:
-        ipv4_address: 172.21.0.4
+        ipv4_address: 172.21.0.3
     restart: unless-stopped
-
-#  elasticsearch:
-#    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
-#    container_name: elasticsearch
-#    environment:
-#      - discovery.type=single-node
-#      - xpack.security.enabled=true
-#      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-#    expose:
-#      - "9200"
-#    volumes:
-#      - es_data:/usr/share/elasticsearch/data
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.5
-#
-#  logstash:
-#    image: docker.elastic.co/logstash/logstash:8.11.3
-#    container_name: logstash
-#    ports:
-#      - "5000:5000/udp"  # для GELF
-#      - "5044:5044"      # для Beats/Filebeat (не обязательно)
-#    environment:
-#      - LOGSTASH_SYSTEM_PASSWORD=${LOGSTASH_SYSTEM_PASSWORD}
-#    volumes:
-#      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
-#    depends_on:
-#      - elasticsearch
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.6
-#
-#  kibana:
-#    image: docker.elastic.co/kibana/kibana:8.12.0
-#    container_name: kibana
-#    depends_on:
-#      - elasticsearch
-#    ports:
-#      - "5601:5601"
-#    environment:
-#      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-#      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
-#      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
-#    volumes:
-#      - ./kibana-init/kibana.yml:/usr/share/kibana/config/kibana.yml
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.7
-#
-#  kibana-init:
-#    container_name: kibana-init
-#    build: ./kibana-init
-#    depends_on:
-#      kibana:
-#        condition: service_started
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.8
-#
-#  prometheus:
-#    image: prom/prometheus:v3.7.0-rc.0
-#    container_name: prometheus
-#    ports:
-#      - "9090:9090"
-#    volumes:
-#      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.9
-#
-#  grafana:
-#    image: grafana/grafana:12.2.0
-#    container_name: grafana
-#    ports:
-#      - "3000:3000"
-#    environment:
-#      - GF_USERS_DEFAULT_THEME=light
-#      #- GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-#      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
-#      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-#    volumes:
-#      - grafana_data:/var/lib/grafana
-#      - ./grafana_provisioning:/etc/grafana/provisioning
-#      #- ./grafana_provisioning/grafana.ini:/etc/grafana/grafana.ini
-#      #- ./certs:/etc/grafana/certs
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.10
-
-#  cadvisor:
-#    image: gcr.io/cadvisor/cadvisor:v0.47.2
-#    container_name: cadvisor
-#    ports:
-#      - "8080:8080"
-#    volumes:
-#      - /:/rootfs:ro
-#      - /var/run:/var/run:rw
-#      - /sys:/sys:ro
-#      - /var/lib/docker/:/var/lib/docker:ro
-#    privileged: true
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.11
-#
-#  node-exporter:
-#    image: prom/node-exporter:latest
-#    container_name: node-exporter
-#    ports:
-#      - "9100:9100"
-#    volumes:
-#      - /proc:/proc:ro
-#      - /sys:/sys:ro
-#      - /:/rootfs:ro
-#    command:
-#      - '--path.procfs=/proc'
-#      - '--path.rootfs=/rootfs'
-#      - '--path.sysfs=/sys'
-#      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-#    networks:
-#      devops_mynetwork:
-#        ipv4_address: 172.21.0.12
 
 volumes:
   pg_data:
     driver: local
-#  es_data:
-#    driver: local
-#  grafana_data:
-#    driver: local
 
 networks:
   devops_mynetwork:
