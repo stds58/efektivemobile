@@ -88,8 +88,6 @@ services:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
       - ./elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
-      #- ./elk/kibana/pipeline/fastapi-logs.ndjson:/usr/share/kibana/config/pipeline/fastapi-logs.ndjson
-      #- ./elk/kibana/import-saved-objects.sh:/tmp/import-saved-objects.sh
     ports:
       - 5601:5601
     environment:
@@ -114,16 +112,22 @@ services:
     environment:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
     volumes:
-      - ./elk/kibana/pipeline/fastapi-logs.ndjson:/data.ndjson:ro
+      - ./elk/kibana/pipeline:/data:ro
     command: >
       sh -c '
-            echo "Ждём Kibana..." &&
-            until curl -sf http://localhost:5601/api/status; do sleep 5; done &&
-            echo "Импорт..." &&
-            curl -X POST "http://localhost:5601/api/saved_objects/_import?overwrite=true" \
-              -H "kbn-xsrf: true" \
-              -u "elastic:$${ELASTIC_PASSWORD}" \
-              -F "file=@/data.ndjson"
+        ls -la /data/ &&
+        echo "Файлы: $(ls /data/)" &&
+        echo "Импорт в Saved Objects..." &&
+        for f in /data/*.ndjson; do
+          [ -f "$$f" ] || continue
+          echo "Импорт: $$(basename "$$f")"
+          curl -sf -X POST "http://localhost:5601/api/saved_objects/_import?overwrite=true" \
+            -H "kbn-xsrf: true" \
+            -u "elastic:$${ELASTIC_PASSWORD}" \
+            -F "file=@$$f"
+        done &&
+        echo &&
+        echo "Готово"
           '
     network_mode: service:kibana
 
