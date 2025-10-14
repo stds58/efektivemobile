@@ -20,6 +20,9 @@ https://github.com/stds58/efektivemobile.git
 требуемые сущности ещё не существуют.
 
 данные протестировать можно в свагере http://127.0.0.1:8000/api/docs
+Kibana: http://localhost:5601
+prometheus: http://localhost:8000/metrics
+Grafana: http://localhost:3000
 
 
 **схема управления ограничениями доступа:**

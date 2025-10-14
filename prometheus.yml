@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "fastapi"
+    static_configs:
+      - targets: ["fastapi-app:8000"]
+
+#  - job_name: "cadvisor"
+#    static_configs:
+#      - targets: [ "cadvisor:8080" ]
+#
+#  - job_name: "node-exporter"
+#    static_configs:
+#      - targets: [ "node-exporter:9100" ]
+
+  - job_name: 'win-exporter'
+    static_configs:
+      #- targets: [ '192.168.0.1:9182' ]
+      - targets: [ 'host.docker.internal:9182' ]  # если Prometheus в Docker
+      #- targets: [ 'localhost:9182' ]  # если Prometheus на хосте

@@ -13,6 +13,7 @@ dependencies = [
     "fastapi[standard]>=0.117.1",
     "itsdangerous>=2.2.0",
     "pip-check-reqs>=2.5.5",
+    "prometheus-fastapi-instrumentator>=7.1.0",
     "pydantic-settings>=2.10.1",
     "pyjwt>=2.10.1",
     "pylint>=3.3.8",

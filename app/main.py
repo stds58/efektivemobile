@@ -1,5 +1,6 @@
 import logging
 import structlog
+from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,6 +53,9 @@ app.add_middleware(
     ],
 )
 
+# Включить метрики
+#Теперь будет эндпоинт: http://fastapi-app:8000/metrics
+Instrumentator().instrument(app).expose(app)
 
 app.include_router(v1_router)
 app.include_router(swagger_router)
