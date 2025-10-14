@@ -68,6 +68,7 @@ services:
       - 5044:5044        # для Beats/Filebeat (не обязательно)
       - 50000:50000/tcp
       - 50000:50000/udp
+      - 8080:8080        # браузер на локалке
       - 9600:9600
     environment:
       LS_JAVA_OPTS: -Xms256m -Xmx256m
@@ -87,6 +88,8 @@ services:
         ELASTIC_VERSION: ${ELASTIC_VERSION}
     volumes:
       - ./elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+      #- ./elk/kibana/pipeline/fastapi-logs.ndjson:/usr/share/kibana/config/pipeline/fastapi-logs.ndjson
+      #- ./elk/kibana/import-saved-objects.sh:/tmp/import-saved-objects.sh
     ports:
       - 5601:5601
     environment:
@@ -101,6 +104,28 @@ services:
     depends_on:
       - elasticsearch
     restart: unless-stopped
+
+  kibana-init:
+    profiles:
+      - kibanainit
+    image: curlimages/curl
+    depends_on:
+      - kibana
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+    volumes:
+      - ./elk/kibana/pipeline/fastapi-logs.ndjson:/data.ndjson:ro
+    command: >
+      sh -c '
+            echo "Ждём Kibana..." &&
+            until curl -sf http://localhost:5601/api/status; do sleep 5; done &&
+            echo "Импорт..." &&
+            curl -X POST "http://localhost:5601/api/saved_objects/_import?overwrite=true" \
+              -H "kbn-xsrf: true" \
+              -u "elastic:$${ELASTIC_PASSWORD}" \
+              -F "file=@/data.ndjson"
+          '
+    network_mode: service:kibana
 
 volumes:
   elasticsearch:

@@ -10,9 +10,10 @@ structlog.processors.format_exc_info,
     если в лог передано исключение (например, logger.error("Oops", exc_info=True)),
     он красиво форматирует traceback
 """
-
 import os
 import sys
+import orjson
+import requests
 import logging
 import structlog
 from structlog.processors import CallsiteParameterAdder, CallsiteParameter
@@ -70,6 +71,19 @@ def add_worker_pid(logger, method_name, event_dict):
     return event_dict
 
 
+def logstash_processor(logger, method_name, event_dict):
+    try:
+        requests.post(
+            "http://localhost:8080",
+            data=event_dict,
+            headers={"Content-Type": "application/json"},
+            timeout=2
+        )
+    except Exception as e:
+        print("Logstash error:", e)
+    return event_dict
+
+
 def configure_logging():
     logging.basicConfig(
         format="%(message)s",
@@ -95,6 +109,8 @@ def configure_logging():
             structlog.processors.dict_tracebacks,
             ordered_json_processor,
             structlog.processors.JSONRenderer(ensure_ascii=False),
+            logstash_processor,
+
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
