@@ -61,7 +61,6 @@ Instrumentator().instrument(app).expose(app)
 app.include_router(v1_router)
 app.include_router(swagger_router)
 
-
 @app.get("/")
 def root():
     return {"message": "Auth System is running"}

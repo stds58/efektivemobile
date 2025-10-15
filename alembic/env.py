@@ -4,7 +4,7 @@ import pkgutil
 import logging
 import json
 import sys
-from logging.config import fileConfig
+#from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -139,6 +139,12 @@ def run_migrations_online() -> None:
 
 
 if context.is_offline_mode():
-    run_migrations_offline()
+    try:
+        run_migrations_offline()
+    except Exception as e:
+        alembic_logger.critical("Alembic migration failed", exc_info=True)
 else:
-    run_migrations_online()
+    try:
+        run_migrations_online()
+    except Exception as e:
+        alembic_logger.critical("Alembic migration failed", exc_info=True)

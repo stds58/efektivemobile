@@ -104,6 +104,7 @@ services:
     restart: unless-stopped
 
   kibana-init:
+    container_name: kibana-init
     profiles:
       - kibanainit
     image: curlimages/curl
