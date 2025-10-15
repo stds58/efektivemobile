@@ -106,10 +106,12 @@ def unify_log_level(logger, method_name, event_dict):
 
 
 def configure_logging():
+    log_level = logging.DEBUG if settings.DEBUG else logging.INFO
+
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
-        level=logging.INFO,
+        level=log_level,
     )
 
     structlog.configure(
