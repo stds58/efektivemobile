@@ -215,7 +215,7 @@ async def authenticate_user(
         logger.error("пользователь отключён", user_id=user.id)
         raise UserInactiveError
     hash_password = await get_hash_password(user_id=user.id, session=session)
-    if not AuthService.verify_password(user_in.password, hash_password):
+    if not await AuthService.verify_password(user_in.password, hash_password):
         raise BadCredentialsError
 
     role_names = await get_user_roles(user_id=user.id, session=session)

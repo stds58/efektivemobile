@@ -71,14 +71,22 @@ async def logout(
     user_id = payload.sub
 
     if access_token:
+        logger.debug("Logout user: ban access token", user_id=user_id)
         AuthService.ban_token(access_token)
         logger.info("Logouted user: baned access token", user_id=user_id)
+    else:
+        logger.debug("Logout user: has no access token", user_id=user_id)
     if refresh_token:
+        logger.debug("Logout user: ban refresh token", user_id=user_id)
         AuthService.ban_token(refresh_token)
         logger.info("Logouted user: baned refresh token", user_id=user_id)
+    else:
+        logger.debug("Logout user: has no refresh token", user_id=user_id)
 
     response.delete_cookie("access_token")
+    logger.debug("Logout user: delete old access token from cookie", user_id=user_id)
     response.delete_cookie("refresh_token")
+    logger.debug("Logout user: delete old refresh token from cookie", user_id=user_id)
 
     message = {"message": "You have been logged out"}
     return message

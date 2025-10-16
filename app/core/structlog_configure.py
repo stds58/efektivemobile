@@ -31,6 +31,7 @@ def ordered_json_processor(logger, method_name, event_dict):
         "ip",
         "method",
         "path",
+        "duration_s",
         "status",
         "timestamp",
         "level",

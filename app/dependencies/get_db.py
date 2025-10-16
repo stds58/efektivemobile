@@ -14,6 +14,7 @@ from app.exceptions.base import (
     SqlalchemyErrorException,
     DatabaseConnectionException,
     SerializationFailureException,
+    BadCredentialsError,
 )
 from app.schemas.permission import RequestContext
 from app.dependencies.get_payload_from_jwt import get_payload_from_jwt
@@ -31,15 +32,14 @@ async def get_token_from_either(request: Request) -> str:
     """
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
-        print("authorization")
         return auth_header[7:]
 
     access_token = request.cookies.get("access_token")
     if access_token:
-        print("access_token")
         return access_token
 
-    raise HTTPException(status_code=401, detail="Not authenticated")
+    logger.error("Not authenticated", error="Has no token")
+    raise BadCredentialsError
 
 
 def auth_db_context(

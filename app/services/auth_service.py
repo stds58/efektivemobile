@@ -15,8 +15,8 @@ logger = structlog.get_logger()
 
 class AuthService:
     @staticmethod
-    def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return verify_password(plain_password, hashed_password)
+    async def verify_password(plain_password: str, hashed_password: str) -> bool:
+        return await verify_password(plain_password, hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
@@ -36,6 +36,9 @@ class AuthService:
 
     @staticmethod
     def decode_access_token(token: str) -> AccessToken:
+        if not token:
+            logger.error("Not authenticated", error="Has no token")
+            raise BadCredentialsError
         try:
             if token in token_blacklist:
                 logger.error("BlacklistedError")

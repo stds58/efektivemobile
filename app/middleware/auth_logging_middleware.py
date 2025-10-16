@@ -1,3 +1,4 @@
+import time
 import structlog
 from structlog.contextvars import bind_contextvars, clear_contextvars
 from fastapi import Request
@@ -21,6 +22,7 @@ async def auth_logging_middleware(request: Request, call_next):
     bind_contextvars(ip=ip)
     bind_contextvars(method=request.method)
     bind_contextvars(path=request.url.path)
+    bind_contextvars(user_agent=request.headers.get("user-agent"))
 
     response = await call_next(request)
 
