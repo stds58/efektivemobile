@@ -1,7 +1,10 @@
 import asyncio
 import importlib
 import pkgutil
-from logging.config import fileConfig
+import logging
+import json
+import sys
+#from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -15,7 +18,7 @@ def import_all_models(package_name: str):
     for _, name, _ in pkgutil.walk_packages(package.__path__, package_name + "."):
         if "models" in name:
             importlib.import_module(name)
-            print("Tables in Base.metadata:", Base.metadata.tables.keys())
+            #print("Tables in Base.metadata:", Base.metadata.tables.keys())
 
 
 import_all_models("app")
@@ -27,8 +30,46 @@ sqlalchemy_url = settings.DATABASE_URL
 config.set_main_option("sqlalchemy.url", sqlalchemy_url)
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+# if config.config_file_name is not None:
+#     fileConfig(config.config_file_name)
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        #print("Все поля record:", vars(record))
+        parts = []
+        if record.exc_info is not None:
+            parts.append(f"exc_info: {record.exc_info}")
+        if record.exc_text is not None:
+            parts.append(f"exc_text: {record.exc_text}")
+        if record.stack_info is not None:
+            parts.append(f"stack_info: {record.stack_info}")
+
+        # Объединяем в одну строку с переносами, если есть что объединять
+        error_str = "\n".join(parts) if parts else None
+
+        return json.dumps({
+            "path": record.pathname,
+            "timestamp": self.formatTime(record),
+            "level": record.levelname.lower(),
+            "logger": record.name,
+            "event": record.getMessage(),
+            "error": error_str,
+            "filename": record.filename,
+            "func_name": record.funcName,
+            "lineno": record.lineno
+        }, ensure_ascii=False)
+
+
+# Настраиваем логгер alembic
+alembic_logger = logging.getLogger("alembic")
+alembic_logger.setLevel(logging.DEBUG)
+
+# Убираем дублирование, если root logger тоже пишет
+alembic_logger.propagate = False
+
+# Добавляем обработчик с JSON-форматтером
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(JsonFormatter())
+alembic_logger.addHandler(handler)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -98,6 +139,12 @@ def run_migrations_online() -> None:
 
 
 if context.is_offline_mode():
-    run_migrations_offline()
+    try:
+        run_migrations_offline()
+    except Exception as e:
+        alembic_logger.critical("Alembic migration failed", exc_info=True)
 else:
-    run_migrations_online()
+    try:
+        run_migrations_online()
+    except Exception as e:
+        alembic_logger.critical("Alembic migration failed", exc_info=True)

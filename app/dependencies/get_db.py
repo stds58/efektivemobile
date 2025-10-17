@@ -1,7 +1,7 @@
 from typing import Optional, AsyncGenerator
 import structlog
 from structlog.contextvars import bind_contextvars
-from fastapi import Depends
+from fastapi import Cookie, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +14,7 @@ from app.exceptions.base import (
     SqlalchemyErrorException,
     DatabaseConnectionException,
     SerializationFailureException,
+    BadCredentialsError,
 )
 from app.schemas.permission import RequestContext
 from app.dependencies.get_payload_from_jwt import get_payload_from_jwt
@@ -25,6 +26,22 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")
 async_session_maker = create_session_factory(settings.DATABASE_URL)
 
 
+async def get_token_from_either(request: Request) -> str:
+    """
+    Получает токен из заголовка Authorization или из куки access_token
+    """
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header[7:]
+
+    access_token = request.cookies.get("access_token")
+    if access_token:
+        return access_token
+
+    logger.error("Not authenticated", error="Has no token")
+    raise BadCredentialsError
+
+
 def auth_db_context(
     business_element: Optional[BusinessDomain] = None,
     isolation_level: Optional[str] = IsolationLevel.READ_COMMITTED,
@@ -34,9 +51,8 @@ def auth_db_context(
     Фабрика зависимости для FastAPI, создающая асинхронную сессию с заданным уровнем изоляции.
     Сессия и пользователь в одном контексте.
     """
-
     async def dependency(
-        token: str = Depends(oauth2_scheme),
+        token: str = Depends(get_token_from_either),
     ) -> AsyncGenerator[RequestContext, None]:
         async with get_session_with_isolation(
             async_session_maker, isolation_level

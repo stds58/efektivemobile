@@ -173,10 +173,10 @@ async def get_user_roles(user_id: UUID, session: AsyncSession) -> List[str]:
 
 async def set_token_in_cookie(response: Response, tokens: Token):
     response.set_cookie(
-        key="users_access_token",
+        key="access_token",
         value=tokens.access_token,
         httponly=True,
-        secure=False,
+        secure=True,
         domain=None,
         path="/",
         samesite="strict",
@@ -184,16 +184,20 @@ async def set_token_in_cookie(response: Response, tokens: Token):
     )
 
     response.set_cookie(
-        key="users_refresh_token",
+        key="refresh_token",
         value=tokens.refresh_token,
         httponly=True,
-        secure=False,  # settings.SECURE_COOKIES
+        secure=True,  # settings.SECURE_COOKIES
         domain=None,
         path="/",
         samesite="strict",
         max_age=60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
     )
-    return
+    return {
+        "status": "success",
+        "access_expires_in": 60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+        "refresh_expires_in": 60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS
+    }
 
 
 async def authenticate_user(
@@ -211,7 +215,7 @@ async def authenticate_user(
         logger.error("пользователь отключён", user_id=user.id)
         raise UserInactiveError
     hash_password = await get_hash_password(user_id=user.id, session=session)
-    if not AuthService.verify_password(user_in.password, hash_password):
+    if not await AuthService.verify_password(user_in.password, hash_password):
         raise BadCredentialsError
 
     role_names = await get_user_roles(user_id=user.id, session=session)
@@ -239,14 +243,14 @@ async def authenticate_user_swagger(
 
 async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Token:
     payload = AuthService.decode_refresh_token(refresh_token)
-    user_id = payload.get("sub")
+    user_id = payload.sub
     if not user_id:
         logger.error("BadCredentialsError")
         raise BadCredentialsError
 
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-    user = await get_user_by_id(access=access, user_id=UUID(user_id), session=session)
+    user = await get_user_by_id(access=access, user_id=user_id, session=session)
 
     if not user:
         logger.error("BadCredentialsError")
@@ -255,7 +259,10 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
         logger.error("UserInactiveError")
         raise UserInactiveError
 
-    new_access = AuthService.create_access_token({"sub": str(user.id)})
+    role_names = await get_user_roles(user_id=user.id, session=session)
+    new_access = AuthService.create_access_token(
+        data={"sub": str(user.id), "role": role_names}
+    )
     new_refresh = AuthService.create_refresh_token({"sub": str(user.id)})
 
     AuthService.ban_token(refresh_token)

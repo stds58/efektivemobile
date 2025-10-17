@@ -10,10 +10,17 @@ import asyncio
 import os
 import sys
 sys.path.append('/opt/backend')
+import logging
+import structlog
+from app.core.structlog_configure import configure_logging
 from app.utils.importer_data import seed_all
 from app.core.config import settings
-if settings.ENVIRONMENT == 'development':
-    asyncio.run(seed_all())
+
+configure_logging()
+logger = structlog.get_logger()
+
+
+asyncio.run(seed_all())
 "
 fi
 

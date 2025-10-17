@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta, timezone
 import jwt
+from uuid import UUID
 import structlog
+from pydantic import ValidationError
 from app.core.config import settings
 from app.core.security import verify_password, get_password_hash
-from app.exceptions.base import BlacklistedError, TokenExpiredError
+from app.exceptions.base import BlacklistedError, TokenExpiredError, BadCredentialsError
 from app.core.blacklist import token_blacklist
 from app.schemas.token import AccessToken, RefreshToken
 
@@ -13,8 +15,8 @@ logger = structlog.get_logger()
 
 class AuthService:
     @staticmethod
-    def verify_password(plain_password: str, hashed_password: str) -> bool:
-        return verify_password(plain_password, hashed_password)
+    async def verify_password(plain_password: str, hashed_password: str) -> bool:
+        return await verify_password(plain_password, hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
@@ -34,6 +36,9 @@ class AuthService:
 
     @staticmethod
     def decode_access_token(token: str) -> AccessToken:
+        if not token:
+            logger.error("Not authenticated", error="Has no token")
+            raise BadCredentialsError
         try:
             if token in token_blacklist:
                 logger.error("BlacklistedError")
@@ -41,10 +46,14 @@ class AuthService:
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
+            user_id = UUID(payload.get('sub'))
             return AccessToken(**payload)
         except jwt.PyJWTError as exc:
-            logger.error("jwt.PyJWTError", error=str(exc))
+            logger.error("jwt.PyJWTError", error=str(exc), data=token)
             raise TokenExpiredError from exc
+        except ValidationError as e:
+            logger.error("Invalid token structure", error=str(e), user_id=user_id, data=token)
+            raise BadCredentialsError from e
 
     @staticmethod
     def ban_token(token: str):

@@ -1,3 +1,4 @@
+import time
 import structlog
 from structlog.contextvars import bind_contextvars, clear_contextvars
 from fastapi import Request
@@ -21,22 +22,8 @@ async def auth_logging_middleware(request: Request, call_next):
     bind_contextvars(ip=ip)
     bind_contextvars(method=request.method)
     bind_contextvars(path=request.url.path)
+    bind_contextvars(user_agent=request.headers.get("user-agent"))
 
     response = await call_next(request)
-
-    # bind_contextvars(status=response.status_code)
-
-    # Логируем ТОЛЬКО успешные авторизованные запросы (2xx, 3xx)
-    # if 200 <= response.status_code < 400:
-    #     user_id = getattr(request.state, "user_id", None)
-    #     if user_id is not None:
-    #         logger.info(
-    #             "AUTHORIZED REQUEST",
-    #             user_id=user_id,
-    #             ip=ip,
-    #             method=request.method,
-    #             path=request.url.path,
-    #             status=response.status_code
-    #         )
 
     return response

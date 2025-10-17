@@ -24,7 +24,7 @@ services:
         condition: service_started
     networks:
       devops_mynetwork:
-        ipv4_address: 172.21.0.3
+        ipv4_address: 172.21.0.2
     restart: unless-stopped
 
   db:
@@ -48,65 +48,12 @@ services:
       retries: 10
     networks:
       devops_mynetwork:
-        ipv4_address: 172.21.0.4
+        ipv4_address: 172.21.0.3
     restart: unless-stopped
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false  # отключаем безопасность для dev
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-    networks:
-      devops_mynetwork:
-        ipv4_address: 172.21.0.5
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.3
-    container_name: logstash
-    ports:
-      - "5000:5000/udp"  # для GELF
-      - "5044:5044"      # для Beats/Filebeat (не обязательно)
-    volumes:
-      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
-    depends_on:
-      - elasticsearch
-    networks:
-      devops_mynetwork:
-        ipv4_address: 172.21.0.6
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.12.0
-    container_name: kibana
-    depends_on:
-      - elasticsearch
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    networks:
-      devops_mynetwork:
-        ipv4_address: 172.21.0.7
-
-  kibana-init:
-    container_name: kibana-init
-    build: ./kibana-init
-    depends_on:
-      kibana:
-        condition: service_started
-    networks:
-      devops_mynetwork:
-        ipv4_address: 172.21.0.8
 
 volumes:
   pg_data:
     driver: local
-  es_data:
 
 networks:
   devops_mynetwork:

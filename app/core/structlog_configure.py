@@ -10,13 +10,14 @@ structlog.processors.format_exc_info,
     если в лог передано исключение (например, logger.error("Oops", exc_info=True)),
     он красиво форматирует traceback
 """
-
 import os
 import sys
+import requests
 import logging
 import structlog
 from structlog.processors import CallsiteParameterAdder, CallsiteParameter
 from structlog.contextvars import merge_contextvars
+from app.core.config import settings
 
 
 def ordered_json_processor(logger, method_name, event_dict):
@@ -30,6 +31,7 @@ def ordered_json_processor(logger, method_name, event_dict):
         "ip",
         "method",
         "path",
+        "duration_s",
         "status",
         "timestamp",
         "level",
@@ -70,17 +72,54 @@ def add_worker_pid(logger, method_name, event_dict):
     return event_dict
 
 
+def logstash_processor(logger, method_name, event_dict):
+    if settings.DEBUG:
+        try:
+            requests.post(
+                "http://localhost:8080",
+                data=event_dict,
+                headers={"Content-Type": "application/json"},
+                timeout=2
+            )
+        except Exception as e:
+            print("Logstash error:", e)
+    return event_dict
+
+
+def unify_log_level(logger, method_name, event_dict):
+    """
+    Унифицирует поле уровня лога в 'level'.
+    Поддерживает как 'level', так и 'severity' на входе.
+    """
+    # Если уже есть 'level' — оставляем
+    if "level" in event_dict:
+        return event_dict
+
+    # Если есть 'severity' — используем его как 'level'
+    if "severity" in event_dict:
+        # Приводим к нижнему регистру, как делает structlog по умолчанию
+        event_dict["level"] = str(event_dict.pop("severity")).lower()
+        return event_dict
+
+    # Если ничего нет — ставим 'info' (или другой уровень по умолчанию)
+    event_dict["level"] = "info"
+    return event_dict
+
+
 def configure_logging():
+    log_level = logging.DEBUG if settings.DEBUG else logging.INFO
+
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
-        level=logging.INFO,
+        level=log_level,
     )
 
     structlog.configure(
         processors=[
             merge_contextvars,
             structlog.stdlib.add_log_level,
+            unify_log_level,
             CallsiteParameterAdder(
                 [
                     CallsiteParameter.FILENAME,
@@ -95,6 +134,8 @@ def configure_logging():
             structlog.processors.dict_tracebacks,
             ordered_json_processor,
             structlog.processors.JSONRenderer(ensure_ascii=False),
+            logstash_processor,
+
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
