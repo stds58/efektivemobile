@@ -2,6 +2,7 @@ import logging
 from typing import Callable, Optional
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from app.core.config import settings
 
 
 logger = logging.getLogger(__name__)
@@ -103,3 +104,23 @@ class SerializationFailureException(CustomHTTPException):
 class SqlalchemyErrorException(CustomInternalServerException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     detail = "Ошибка базы данных"
+
+
+class FileStorageError(CustomInternalServerException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Ошибка сохранения файла"
+
+
+class FileSizeError(CustomInternalServerException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = f"Файл слишком большой (разрешается максимум {settings.FILE_SIZE_LIMIT_MB} МБ)"
+
+
+class FileExtensionError(CustomInternalServerException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = f"Разрешены только файлы {settings.ALLOW_FILE_EXTENSION}"
+
+
+class FileNameError(CustomInternalServerException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Имя файла не может быть пустым"
