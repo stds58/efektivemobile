@@ -7,7 +7,7 @@ from app.api.v1.order import router as order_router
 from app.api.v1.access_rule import router as access_rule_router
 from app.api.v1.permission import router as permission_router
 from app.api.v1.file_upload import router as upload_router
-
+from app.api.v1.report import router as report_router
 
 v1_router = APIRouter(prefix="/v1")
 
@@ -22,3 +22,4 @@ v1_router.include_router(
 )
 v1_router.include_router(permission_router, prefix="/permissions", tags=["permission"])
 v1_router.include_router(upload_router, prefix="/upload", tags=["upload"])
+v1_router.include_router(report_router, prefix="/report", tags=["report"])
