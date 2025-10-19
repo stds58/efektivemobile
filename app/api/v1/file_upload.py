@@ -1,17 +1,20 @@
 from pathlib import Path
 from uuid import UUID
 import structlog
-from fastapi import APIRouter, Depends, status, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.dependencies.get_db import auth_db_context
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
-from app.schemas.file_upload import SchemaFileUploadBase, SchemaFileUploadCreate, SchemaFileUploadFilter
+from app.schemas.file_upload import (
+    SchemaFileUploadBase,
+    SchemaFileUploadCreate,
+    SchemaFileUploadFilter,
+)
 from app.services.file_upload import (
     find_one_file_upload_by_id,
     find_many_file_upload,
     add_one_file_upload,
-    delete_one_file_upload,
     read_content_file,
 )
 
@@ -36,7 +39,10 @@ async def get_upload_files(
     pagination: PaginationParams = Depends(),
 ):
     logger.info(
-        "Get upload_files", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+        "Get upload_files",
+        owner_field=OWNER_FIELD,
+        filters=filters,
+        pagination=pagination,
     )
     file_upload = await find_many_file_upload(
         business_element=BusinessDomain.FILE_UPLOAD,
@@ -46,7 +52,10 @@ async def get_upload_files(
         pagination=pagination,
     )
     logger.info(
-        "Geted upload_files", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+        "Geted upload_files",
+        owner_field=OWNER_FIELD,
+        filters=filters,
+        pagination=pagination,
     )
     return file_upload
 
@@ -67,7 +76,7 @@ async def get_sheets(
         business_element=BusinessDomain.FILE_UPLOAD,
         access=request_context.access,
         session=request_context.session,
-        file_upload_id=file_upload_id
+        file_upload_id=file_upload_id,
     )
     logger.info("Geted sheet", model_id=file_upload_id)
     return file_upload
@@ -91,7 +100,7 @@ async def get_content(
         access=request_context.access,
         session=request_context.session,
         file_upload_id=file_upload_id,
-        sheet_name=sheet_name
+        sheet_name=sheet_name,
     )
     logger.info("Geted content", model_id=file_upload_id)
     return content
@@ -106,12 +115,12 @@ async def upload_file(
             commit=True,
         )
     ),
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
 ) -> SchemaFileUploadBase:
     data = SchemaFileUploadCreate(
-        name = Path(file.filename).stem,
-        extension = Path(file.filename).suffix.lower(),
-        size_bytes = file.size
+        name=Path(file.filename).stem,
+        extension=Path(file.filename).suffix.lower(),
+        size_bytes=file.size,
     )
 
     logger.info("Upload file", data=data)
@@ -120,9 +129,8 @@ async def upload_file(
         access=request_context.access,
         data=data,
         session=request_context.session,
-        file=file
+        file=file,
     )
     logger.info("Uploaded file", data=data)
 
     return file_upload
-

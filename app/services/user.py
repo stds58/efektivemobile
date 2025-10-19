@@ -196,7 +196,7 @@ async def set_token_in_cookie(response: Response, tokens: Token):
     return {
         "status": "success",
         "access_expires_in": 60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-        "refresh_expires_in": 60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS
+        "refresh_expires_in": 60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
     }
 
 

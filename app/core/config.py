@@ -1,6 +1,7 @@
 """
 Класс настроек приложения
 """
+
 import os
 from typing import Set
 from functools import lru_cache
@@ -56,7 +57,6 @@ class Settings(BaseSettings):
     @property
     def ALLOW_FILE_EXTENSION(self) -> Set[str]:
         return self.ALLOW_FILE_EXTENSIONS.split(",")
-
 
     model_config = ConfigDict(extra="ignore")
 

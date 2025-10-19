@@ -4,6 +4,7 @@
 Создаёт отчёт по РСО
 Выгружает в формат json
 """
+
 import pandas as pd
 from app.utils.file_loader import ExcelLoader
 from app.utils.file_exporter import JsonExporter
@@ -11,13 +12,14 @@ from app.utils.file_exporter import JsonExporter
 
 class OverdueCalculator:
     """
-        Рассчитывает просроченную задолженность на конец периода по формуле:
-        max(0, Дебиторская_на_конец - Кредиторская_на_конец - Начислено_за_период)
-        Предполагаются следующие названия столбцов:
-        - 'Дебиторская задолженность на конец периода'
-        - 'Кредиторская задолженность на конец периода'
-        - 'Начислено за период'
+    Рассчитывает просроченную задолженность на конец периода по формуле:
+    max(0, Дебиторская_на_конец - Кредиторская_на_конец - Начислено_за_период)
+    Предполагаются следующие названия столбцов:
+    - 'Дебиторская задолженность на конец периода'
+    - 'Кредиторская задолженность на конец периода'
+    - 'Начислено за период'
     """
+
     @staticmethod
     def calculate(df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
@@ -25,7 +27,7 @@ class OverdueCalculator:
         required_cols = [
             "Дебиторская задолженность на конец периода",
             "Кредиторская задолженность на конец периода",
-            "Начислено за период"
+            "Начислено за период",
         ]
 
         for col in required_cols:
@@ -33,7 +35,8 @@ class OverdueCalculator:
                 raise KeyError(f"Отсутствует обязательный столбец: '{col}'")
             # Заменяем неразрывные пробелы на обычные и конвертируем в float
             df[col] = (
-                df[col].astype(str)
+                df[col]
+                .astype(str)
                 .str.replace("\xa0", " ", regex=False)
                 .str.replace(" ", "", regex=False)
                 .replace("", "0")
@@ -46,9 +49,13 @@ class OverdueCalculator:
 
 class RSOAggregator:
     """Выполняет агрегацию по РСО"""
+
     @staticmethod
     def aggregate(df: pd.DataFrame) -> dict[str, float]:
-        if "РСО" not in df.columns or "Просроченная задолженность на конец периода" not in df.columns:
+        if (
+            "РСО" not in df.columns
+            or "Просроченная задолженность на конец периода" not in df.columns
+        ):
             raise ValueError("Требуемые столбцы отсутствуют")
         return (
             df.groupby("РСО")["Просроченная задолженность на конец периода"]
@@ -60,6 +67,7 @@ class RSOAggregator:
 
 class DebtReport:
     """Создаёт отчёт по РСО и выгружает в формат json"""
+
     def __init__(
         self,
         input_file: str,

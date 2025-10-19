@@ -136,7 +136,7 @@ async def seed_products(session: AsyncSession):
         if category_name not in categories:
             logger.error(
                 "Error while creating category",
-                error=f"Категория '{category_name}' не найдена при импорте продукта '{product_data['name']}'"
+                error=f"Категория '{category_name}' не найдена при импорте продукта '{product_data['name']}'",
             )
             raise ValueError(
                 f"Категория '{category_name}' не найдена при импорте продукта '{product_data['name']}'"

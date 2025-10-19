@@ -1,7 +1,7 @@
 from uuid import UUID
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .base import Base,StrNullFalse
+from .base import Base, StrNullFalse
 
 
 class FileUpload(Base):
@@ -14,4 +14,3 @@ class FileUpload(Base):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} (id={self.id}, user_id={self.user_id}, name={self.name})>"
-

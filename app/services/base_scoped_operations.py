@@ -23,7 +23,9 @@ async def find_one_scoped_by_id(
 
     if "read_all_permission" in access.permissions:
         logger.info("read_all_permission", model_id=business_element_id)
-        return await methodDAO.find_one_by_id(model_id=business_element_id, session=session)
+        return await methodDAO.find_one_by_id(
+            model_id=business_element_id, session=session
+        )
 
     if "read_permission" in access.permissions:
         logger.info("read_permission", model_id=business_element_id)

@@ -19,5 +19,5 @@ __all__ = [
     "BusinessElement",
     "Category",
     "Product",
-    "FileUpload"
+    "FileUpload",
 ]

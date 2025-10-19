@@ -30,12 +30,13 @@ https://github.com/stds58/efektivemobile.git
 ## Задание 2 (Python)
 **Реализуйте на Python с использованием pandas и подхода ООП инструмент, который:**
 * загружает данные из Excel-файла  [file_loader.py](app/utils/file_loader.py)
-* выполняет тот же расчёт просроченной задолженности, что и в первом задании [creator_report_rso.py](app/utils/creator_report_rso.py )
-* агрегирует данные по РСО (суммирует просрочку) [creator_report_rso.py](app/utils/creator_report_rso.py )
-* сохраняет результат в формате JSON [file_exporter.py](app/utils/file_exporter.py )
+* выполняет тот же расчёт просроченной задолженности, что и в первом задании [creator_report_rso.py](app/utils/creator_report_rso.py)
+* агрегирует данные по РСО (суммирует просрочку) [creator_report_rso.py](app/utils/creator_report_rso.py)
+* сохраняет результат в формате JSON [file_exporter.py](app/utils/file_exporter.py)
 
 
 ## Задание 3 (Django)
 На основе результата из второго задания создайте простое Django-приложение, которое отображает агрегированные данные в виде HTML-таблицы по адресу /report/.
 Таблица должна быть читаемой (достаточно базового оформления). Использование JavaScript для фильтрации - по желанию.
 
+[/report/](http://127.0.0.1:8000/v1/report)

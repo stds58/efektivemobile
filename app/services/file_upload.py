@@ -87,7 +87,9 @@ async def add_one_file_upload(
         session=session,
     )
     file_upload_id = str(file_upload.id)
-    file_path = os.path.join(settings.USER_UPLOADS_DIR, f"{file_upload_id}{data.extension}")
+    file_path = os.path.join(
+        settings.USER_UPLOADS_DIR, f"{file_upload_id}{data.extension}"
+    )
     try:
         with open(file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
@@ -128,7 +130,9 @@ async def read_content_file(
     filename = f"{file.id}{file.extension}"
     if file.extension in [".xlsx", ".xls"]:
         if sheet_name is None:
-            raise FileExtensionError("Не указан лист екселя, из которого надо получить данные")
+            raise FileExtensionError(
+                "Не указан лист екселя, из которого надо получить данные"
+            )
         loader = ExcelLoader(filename)
         df = loader.load_data(sheet_name)
         data = loader.clean_dataframe_for_json(df)

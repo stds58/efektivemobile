@@ -1,6 +1,7 @@
 """
 Сохраняет данные в файл
 """
+
 import os
 import json
 from datetime import datetime
@@ -18,8 +19,10 @@ class FileExporter(ABC):
     def _generate_filename(self, extension: str) -> str:
         """Генерирует имя файла с меткой времени."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_base = "".join(c if c.isalnum() or c in "._-" else "_" for c in self.file_name)
-        return os.path.join(self.file_path,f"{safe_base}_{timestamp}{extension}")
+        safe_base = "".join(
+            c if c.isalnum() or c in "._-" else "_" for c in self.file_name
+        )
+        return os.path.join(self.file_path, f"{safe_base}_{timestamp}{extension}")
 
     @abstractmethod
     def export_data(self) -> Path:

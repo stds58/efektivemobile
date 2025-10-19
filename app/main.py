@@ -63,11 +63,12 @@ app.add_middleware(
 )
 
 # Включить метрики
-#Теперь будет эндпоинт: http://fastapi-app:8000/metrics
+# Теперь будет эндпоинт: http://fastapi-app:8000/metrics
 Instrumentator().instrument(app).expose(app)
 
 app.include_router(v1_router)
 app.include_router(swagger_router)
+
 
 @app.get("/")
 def root():

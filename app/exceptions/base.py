@@ -113,7 +113,9 @@ class FileStorageError(CustomInternalServerException):
 
 class FileSizeError(CustomInternalServerException):
     status_code = status.HTTP_400_BAD_REQUEST
-    detail = f"Файл слишком большой (разрешается максимум {settings.FILE_SIZE_LIMIT_MB} МБ)"
+    detail = (
+        f"Файл слишком большой (разрешается максимум {settings.FILE_SIZE_LIMIT_MB} МБ)"
+    )
 
 
 class FileExtensionError(CustomInternalServerException):
