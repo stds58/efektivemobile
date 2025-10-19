@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Request
+from uuid import UUID
+from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import structlog
 from fastapi import APIRouter, Depends, status
+from app.services.report import get_report
 
 
 logger = structlog.get_logger()
@@ -28,6 +30,48 @@ AGGREGATED_DATA = {
     'ТЭК': 159457.72
 }
 
+@router.get("/{file_upload_id}/generate-report")
+async def report(
+    file_upload_id: UUID,
+    extension: str,
+    sheet_name: str
+):
+    logger.info("Get content", model_id=file_upload_id)
+    content = await get_report(
+        #access=request_context.access,
+        #session=request_context.session,
+        file_upload_id=file_upload_id,
+        extension=extension,
+        sheet_name=sheet_name
+    )
+    logger.info("Geted content", model_id=file_upload_id)
+    return content
+
+"""
+@router.get("/{file_upload_id}/content", summary="Get content")
+async def get_content(
+    file_upload_id: UUID,
+    sheet_name: str = None,
+    request_context: RequestContext = Depends(
+        auth_db_context(
+            business_element=BusinessDomain.FILE_UPLOAD,
+            isolation_level=IsolationLevel.REPEATABLE_READ,
+            commit=True,
+        )
+    ),
+):
+    logger.info("Get content", model_id=file_upload_id)
+    content = await read_content_file(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        access=request_context.access,
+        session=request_context.session,
+        file_upload_id=file_upload_id,
+        sheet_name=sheet_name
+    )
+    logger.info("Geted content", model_id=file_upload_id)
+    return content
+"""
+
 @router.get("", response_class=HTMLResponse)
 async def report(request: Request):
     # Сортируем по убыванию суммы (опционально)
@@ -36,6 +80,3 @@ async def report(request: Request):
         "report.html",
         {"request": request, "data": sorted_data}
     )
-
-
-

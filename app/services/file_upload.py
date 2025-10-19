@@ -48,7 +48,7 @@ async def find_one_file_upload_by_id(
         session=session,
         business_element_id=file_upload_id,
     )
-    if file.extension in [".xlsx", ".xlsx"]:
+    if file.extension in [".xlsx", ".xls"]:
         filename = f"{str(file.id)}{file.extension}"
         loader = ExcelLoader(filename)
         file.sheet = loader.get_sheet_names()

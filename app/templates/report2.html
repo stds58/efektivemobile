@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчёт по просроченной задолженности</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/report.css') }}">
+</head>
+<body>
+    <h1>Просроченная задолженность по РСО</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>РСО</th>
+                <th>Сумма, ₽</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rso, amount in data %}
+            <tr>
+                <td>{{ rso }}</td>
+                <td class="amount">{{ "%.2f"|format(amount) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
