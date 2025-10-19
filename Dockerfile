@@ -31,6 +31,8 @@ RUN useradd -m appuser
 
 COPY . .
 
+RUN chown -R appuser:appuser uploads data
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

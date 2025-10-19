@@ -24,7 +24,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 @router.get("/{file_upload_id}/generate-report")
-async def get_report(
+async def generate_report(
     file_upload_id: UUID,
     extension: str,
     sheet_name: str,
