@@ -48,13 +48,10 @@ async def find_one_file_upload_by_id(
         session=session,
         business_element_id=file_upload_id,
     )
-    file_path = os.path.join(settings.USER_UPLOADS_DIR, str(file.id))
-    try:
-        wb = load_workbook(filename=f"{file_path}{file.extension}", read_only=True)
-        file.sheet = wb.sheetnames
-        wb.close()
-    except Exception:
-        pass
+    if file.extension in [".xlsx", ".xlsx"]:
+        filename = f"{str(file.id)}{file.extension}"
+        loader = ExcelLoader(filename)
+        file.sheet = loader.get_sheet_names()
     return file
 
 
@@ -119,6 +116,7 @@ async def read_content_file(
     access: AccessContext,
     session: AsyncSession,
     file_upload_id=UUID,
+    sheet_name=str,
 ):
     file = await find_one_scoped_by_id(
         business_element=business_element,
@@ -128,9 +126,11 @@ async def read_content_file(
         business_element_id=file_upload_id,
     )
     filename = f"{file.id}{file.extension}"
-    if file.extension in [".xlsx"]:
+    if file.extension in [".xlsx", ".xls"]:
+        if sheet_name is None:
+            raise FileExtensionError("Не указан лист екселя, из которого надо получить данные")
         loader = ExcelLoader(filename)
-        df = loader.load_data("data")
+        df = loader.load_data(sheet_name)
         data = loader.clean_dataframe_for_json(df)
     elif file.extension in [".json"]:
         loader = JsonLoader(filename)

@@ -29,6 +29,7 @@ dependencies = [
     "structlog>=25.4.0",
     "uvicorn>=0.36.0",
     "vulture>=2.14",
+    "xlrd==2.0.2",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["."]

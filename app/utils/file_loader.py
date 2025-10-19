@@ -3,9 +3,11 @@
 """
 import os
 import json
+import xlrd
 from openpyxl import load_workbook
 import pandas as pd
 import numpy as np
+from app.exceptions.base import FileExtensionError
 
 
 class FileLoader():
@@ -22,13 +24,38 @@ class FileLoader():
 
 class ExcelLoader(FileLoader):
     """Загружает данные из Excel-файла"""
+    def get_engine(self):
+        if self.file_path.lower().endswith('.xlsx'):
+            engine = 'openpyxl'
+            return engine
+        if self.file_path.lower().endswith('.xls'):
+            engine = 'xlrd'
+            return engine
+        raise ValueError("Поддерживаются только .xlsx и .xls")
+
+
     def load_data(self, sheet_name: str) -> pd.DataFrame:
-        self.df = pd.read_excel(self.file_path, sheet_name=sheet_name)
-        return self.df
+        try:
+            engine = self.get_engine()
+            self.df = pd.read_excel(self.file_path, sheet_name=sheet_name, engine=engine)
+            return self.df
+        except:
+            raise FileExtensionError("Такой лист в екселе отсутствует")
+
 
     def get_sheet_names(self) -> list[str]:
-        wb = load_workbook(filename=self.file_path, read_only=True)
-        return wb.sheetnames
+        if self.file_path.lower().endswith('.xlsx'):
+            wb = load_workbook(filename=self.file_path, read_only=True)
+            sheetnames = wb.sheetnames
+            wb.close()
+            return sheetnames
+        elif self.file_path.lower().endswith('.xls'):
+            wb = xlrd.open_workbook(self.file_path)
+            sheetnames = wb.sheet_names()
+            return sheetnames
+        else:
+            raise ValueError("Поддерживаются только .xlsx и .xls")
+
 
     def clean_dataframe_for_json(self, df: pd.DataFrame) -> list[dict]:
         """
@@ -50,6 +77,11 @@ class JsonLoader(FileLoader):
 
 
 if __name__ == "__main__":
+    loader = ExcelLoader("2034d539-a27c-4a99-aace-710f7b9cad75.xls")
+    print(loader.get_sheet_names())
+    data = loader.load_data("data")
+    print(data)
+
     loader = ExcelLoader("309b91f2-5157-4310-be57-56c220857515.xlsx")
     data = loader.load_data("data")
     print(data)

@@ -76,6 +76,7 @@ async def get_sheets(
 @router.get("/{file_upload_id}/content", summary="Get content")
 async def get_content(
     file_upload_id: UUID,
+    sheet_name: str = None,
     request_context: RequestContext = Depends(
         auth_db_context(
             business_element=BusinessDomain.FILE_UPLOAD,
@@ -89,7 +90,8 @@ async def get_content(
         business_element=BusinessDomain.FILE_UPLOAD,
         access=request_context.access,
         session=request_context.session,
-        file_upload_id=file_upload_id
+        file_upload_id=file_upload_id,
+        sheet_name=sheet_name
     )
     logger.info("Geted content", model_id=file_upload_id)
     return content
