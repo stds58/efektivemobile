@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 import re
 from uuid import UUID
@@ -12,6 +12,7 @@ class SchemaFileUploadBase(BaseModel):
     user_id: UUID
     name: str
     extension: str
+    sheet: Optional[List[str]] = None
     size_bytes: int
     created_at: datetime
     updated_at: datetime
@@ -29,7 +30,7 @@ class SchemaFileUploadCreate(BaseModel):
             raise FileNameError
         # Очищаем имя от опасных символов
         # < > : " / \ | ? * ; & $ ` ' ! # % { } [ ] ~ ^ %20 \n \t \0
-        clean_name = re.sub(r"[^a-zA-Z0-9._\-() ]", "_", field)
+        clean_name = re.sub(r"[^a-zA-Zа-яА-Я0-9._\-() ]", "_", field)
         clean_name = clean_name.strip()[:255]
         return clean_name
 

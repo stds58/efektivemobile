@@ -8,15 +8,91 @@ from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
 from app.schemas.file_upload import SchemaFileUploadBase, SchemaFileUploadCreate, SchemaFileUploadFilter
 from app.services.file_upload import (
+    find_one_file_upload_by_id,
     find_many_file_upload,
     add_one_file_upload,
     delete_one_file_upload,
+    read_content_file,
 )
 
 
 logger = structlog.get_logger()
 
 router = APIRouter()
+
+OWNER_FIELD = "user_id"
+
+
+@router.get("", summary="Upload file")
+async def get_upload_files(
+    request_context: RequestContext = Depends(
+        auth_db_context(
+            business_element=BusinessDomain.FILE_UPLOAD,
+            isolation_level=IsolationLevel.REPEATABLE_READ,
+            commit=False,
+        )
+    ),
+    filters: SchemaFileUploadFilter = Depends(),
+    pagination: PaginationParams = Depends(),
+):
+    logger.info(
+        "Get upload_files", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+    )
+    file_upload = await find_many_file_upload(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        access=request_context.access,
+        filters=filters,
+        session=request_context.session,
+        pagination=pagination,
+    )
+    logger.info(
+        "Geted upload_files", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+    )
+    return file_upload
+
+
+@router.get("/{file_upload_id}", summary="Get sheets in excell file")
+async def get_sheets(
+    file_upload_id: UUID,
+    request_context: RequestContext = Depends(
+        auth_db_context(
+            business_element=BusinessDomain.FILE_UPLOAD,
+            isolation_level=IsolationLevel.REPEATABLE_READ,
+            commit=True,
+        )
+    ),
+):
+    logger.info("Get sheet", model_id=file_upload_id)
+    file_upload = await find_one_file_upload_by_id(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        access=request_context.access,
+        session=request_context.session,
+        file_upload_id=file_upload_id
+    )
+    logger.info("Geted sheet", model_id=file_upload_id)
+    return file_upload
+
+
+@router.get("/{file_upload_id}/content", summary="Get content")
+async def get_content(
+    file_upload_id: UUID,
+    request_context: RequestContext = Depends(
+        auth_db_context(
+            business_element=BusinessDomain.FILE_UPLOAD,
+            isolation_level=IsolationLevel.REPEATABLE_READ,
+            commit=True,
+        )
+    ),
+):
+    logger.info("Get content", model_id=file_upload_id)
+    content = await read_content_file(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        access=request_context.access,
+        session=request_context.session,
+        file_upload_id=file_upload_id
+    )
+    logger.info("Geted content", model_id=file_upload_id)
+    return content
 
 
 @router.post("", summary="Upload file")

@@ -11,6 +11,7 @@ from app.schemas.base import PaginationParams
 from app.schemas.file_upload import (
     SchemaFileUploadCreate,
     SchemaFileUploadFilter,
+    SchemaFileUploadBase,
 )
 from app.schemas.permission import AccessContext
 from app.services.base import (
@@ -19,15 +20,42 @@ from app.services.base import (
     delete_one_business_element,
 )
 from app.services.base_scoped_operations import (
+    find_one_scoped_by_id,
     find_many_scoped,
     add_one_scoped,
     update_one_scoped,
     delete_one_scoped,
 )
 from app.exceptions.base import FileStorageError
+from openpyxl import load_workbook
+from app.utils.file_loader import ExcelLoader, JsonLoader
+from app.exceptions.base import FileExtensionError
 
 
 logger = structlog.get_logger()
+
+
+async def find_one_file_upload_by_id(
+    business_element: BusinessDomain,
+    access: AccessContext,
+    session: AsyncSession,
+    file_upload_id=UUID,
+):
+    file = await find_one_scoped_by_id(
+        business_element=business_element,
+        methodDAO=FileUploadDAO,
+        access=access,
+        session=session,
+        business_element_id=file_upload_id,
+    )
+    file_path = os.path.join(settings.USER_UPLOADS_DIR, str(file.id))
+    try:
+        wb = load_workbook(filename=f"{file_path}{file.extension}", read_only=True)
+        file.sheet = wb.sheetnames
+        wb.close()
+    except Exception:
+        pass
+    return file
 
 
 async def find_many_file_upload(
@@ -62,7 +90,7 @@ async def add_one_file_upload(
         session=session,
     )
     file_upload_id = str(file_upload.id)
-    file_path = os.path.join(settings.USER_UPLOADS_DIR, file_upload_id)
+    file_path = os.path.join(settings.USER_UPLOADS_DIR, f"{file_upload_id}{data.extension}")
     try:
         with open(file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
@@ -84,3 +112,29 @@ async def delete_one_file_upload(
         session=session,
         business_element_id=file_upload_id,
     )
+
+
+async def read_content_file(
+    business_element: BusinessDomain,
+    access: AccessContext,
+    session: AsyncSession,
+    file_upload_id=UUID,
+):
+    file = await find_one_scoped_by_id(
+        business_element=business_element,
+        methodDAO=FileUploadDAO,
+        access=access,
+        session=session,
+        business_element_id=file_upload_id,
+    )
+    filename = f"{file.id}{file.extension}"
+    if file.extension in [".xlsx"]:
+        loader = ExcelLoader(filename)
+        df = loader.load_data("data")
+        data = loader.clean_dataframe_for_json(df)
+    elif file.extension in [".json"]:
+        loader = JsonLoader(filename)
+        data = loader.load_data()
+    else:
+        raise FileExtensionError
+    return data

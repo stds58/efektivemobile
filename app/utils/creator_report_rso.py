@@ -1,53 +1,12 @@
 """
-Задание 2 (Python)
-Реализуйте на Python с использованием pandas и подхода ООП инструмент, который:
-* загружает данные из Excel-файла
-* выполняет тот же расчёт просроченной задолженности, что и в первом задании
-* агрегирует данные по РСО (суммирует просрочку)
-* сохраняет результат в формате JSON
-
-надо сделать:
-апи загрузка файла
-апи получить список файлов и листов
-апи получить содержимое файла
-апи получить отчёт
-отчёт проверка расширения (а ещё лучше типа данных)
-
+Рассчитывает просроченную задолженность на конец периода
+Выполняет агрегацию по РСО
+Создаёт отчёт по РСО
+Выгружает в формат json
 """
-import os
-import json
-from openpyxl import load_workbook
 import pandas as pd
-
-
-class FileLoader():
-    def __init__(self, file_name: str):
-        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        self.file_path = os.path.join(self.project_root, "data", file_name)
-
-        if not os.path.exists(self.file_path):
-            raise FileNotFoundError(f"Файл не найден: {os.path.abspath(self.file_path)}")
-
-    def load_data(self):
-        raise NotImplementedError
-
-
-class ExcelLoader(FileLoader):
-    """Загружает данные из Excel-файла"""
-    def load_data(self, sheet_name: str):
-        self.df = pd.read_excel(self.file_path, sheet_name=sheet_name)
-        return self.df
-
-    def get_sheet_names(self) -> list[str]:
-        wb = load_workbook(filename=self.file_path, read_only=True)
-        return wb.sheetnames
-
-
-class JsonLoader(FileLoader):
-    """Загружает данные из Json-файла"""
-    def load_data(self) -> dict:
-        with open(self.file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+from app.utils.file_loader import ExcelLoader
+from app.utils.file_exporter import JsonExporter
 
 
 class OverdueCalculator:
@@ -100,17 +59,16 @@ class RSOAggregator:
 
 
 class DebtReport:
+    """Создаёт отчёт по РСО и выгружает в формат json"""
     def __init__(
         self,
         input_file: str,
         sheet_name: str,
-        output_file: str
     ):
         self.input_file = input_file
         self.sheet_name = sheet_name
-        self.output_file = output_file
 
-    def generate(self):
+    def generate(self) -> dict[str, float]:
         # 1. Загрузка
         loader = ExcelLoader(self.input_file)
         df = loader.load_data(self.sheet_name)
@@ -124,16 +82,12 @@ class DebtReport:
         return result
 
 
-f1 = ExcelLoader("Тестовое задание.xlsx")
-# f2 = JsonLoader("overdue_by_rso.json")
-print(f1.get_sheet_names())
-# print(f1.load_data("task"))
-# print(f2.load_data())
-
-report = DebtReport(
-    input_file="Тестовое задание.xlsx",
-    sheet_name="raw_data",
-    output_file="ttt.json"
-)
-result = report.generate()
-print(result)
+if __name__ == "__main__":
+    report = DebtReport(
+        input_file="309b91f2-5157-4310-be57-56c220857515.xlsx",
+        sheet_name="data",
+    )
+    result = report.generate()
+    jsonfile = JsonExporter("_test_overdue_by_rso")
+    jsonfile_path = jsonfile.export_data(result)
+    print({"сохранено в": jsonfile_path, "report": result})
