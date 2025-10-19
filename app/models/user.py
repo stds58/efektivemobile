@@ -36,6 +36,12 @@ class User(Base):
         lazy="selectin",
     )
 
+    file_uploads: Mapped[List["FileUpload"]] = relationship(
+        "FileUpload",
+        back_populates="users",
+        lazy="selectin",
+    )
+
     def __str__(self):
         return f"<{self.__class__.__name__} (id={self.id}, email={self.email!r})>"
 

@@ -5,6 +5,7 @@ BUSINESS_ELEMENTS_DATA = [
     {"name": "category", "description": "Управление категориями"},
     {"name": "access_rule", "description": "Управление правами доступа"},
     {"name": "user_roles", "description": "Управление ролями"},
+    {"name": "fileupload", "description": "Загрузка файлов"},
 ]
 
 ROLES_DATA = [
@@ -81,6 +82,17 @@ ACCESS_RULES_DATA = [
         "delete_all_permission": True,
     },
     {
+        "role_name": "admin",
+        "businesselement_name": "fileupload",
+        "read_permission": True,
+        "read_all_permission": True,
+        "create_permission": True,
+        "update_permission": True,
+        "update_all_permission": True,
+        "delete_permission": True,
+        "delete_all_permission": True,
+    },
+    {
         "role_name": "manager",
         "businesselement_name": "user",
         "read_permission": True,
@@ -147,6 +159,17 @@ ACCESS_RULES_DATA = [
         "delete_all_permission": False,
     },
     {
+        "role_name": "manager",
+        "businesselement_name": "fileupload",
+        "read_permission": True,
+        "read_all_permission": True,
+        "create_permission": True,
+        "update_permission": True,
+        "update_all_permission": True,
+        "delete_permission": True,
+        "delete_all_permission": True,
+    },
+    {
         "role_name": "user",
         "businesselement_name": "user",
         "read_permission": True,
@@ -211,6 +234,17 @@ ACCESS_RULES_DATA = [
         "update_all_permission": False,
         "delete_permission": False,
         "delete_all_permission": False,
+    },
+    {
+        "role_name": "user",
+        "businesselement_name": "fileupload",
+        "read_permission": True,
+        "read_all_permission": True,
+        "create_permission": True,
+        "update_permission": True,
+        "update_all_permission": True,
+        "delete_permission": True,
+        "delete_all_permission": True,
     },
 ]
 

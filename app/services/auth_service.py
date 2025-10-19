@@ -46,13 +46,15 @@ class AuthService:
             payload = jwt.decode(
                 token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
-            user_id = UUID(payload.get('sub'))
+            user_id = UUID(payload.get("sub"))
             return AccessToken(**payload)
         except jwt.PyJWTError as exc:
             logger.error("jwt.PyJWTError", error=str(exc), data=token)
             raise TokenExpiredError from exc
         except ValidationError as e:
-            logger.error("Invalid token structure", error=str(e), user_id=user_id, data=token)
+            logger.error(
+                "Invalid token structure", error=str(e), user_id=user_id, data=token
+            )
             raise BadCredentialsError from e
 
     @staticmethod

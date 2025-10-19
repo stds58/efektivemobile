@@ -12,6 +12,36 @@ from app.exceptions.base import PermissionDenied
 logger = structlog.get_logger()
 
 
+async def find_one_scoped_by_id(
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    session: AsyncSession,
+    business_element_id: UUID,
+):
+    custom_detail = f"Missing read or read_all permission on {business_element.value}"
+
+    if "read_all_permission" in access.permissions:
+        logger.info("read_all_permission", model_id=business_element_id)
+        return await methodDAO.find_one_by_id(
+            model_id=business_element_id, session=session
+        )
+
+    if "read_permission" in access.permissions:
+        logger.info("read_permission", model_id=business_element_id)
+        obj = await methodDAO.find_one_by_id(
+            model_id=business_element_id, session=session
+        )
+
+        if obj.user_id != access.user_id:
+            logger.error("PermissionDenied on read_permission", error=custom_detail)
+            raise PermissionDenied(custom_detail=custom_detail)
+        return obj
+
+    logger.error("PermissionDenied", error=custom_detail)
+    raise PermissionDenied(custom_detail=custom_detail)
+
+
 async def find_many_scoped(
     business_element: BusinessDomain,
     methodDAO: Callable[..., Awaitable[Any]],

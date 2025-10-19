@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
-import jwt
 import bcrypt
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
+import jwt
 import structlog
 from app.core.config import settings
 from app.exceptions.base import VerifyHashError
@@ -13,6 +13,7 @@ logger = structlog.get_logger()
 
 # Ограничьте число потоков, чтобы не создавать 1000 потоков при 1000 логинах
 executor = ThreadPoolExecutor(max_workers=10)  # например, 2–4× ядра CPU
+
 
 async def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:

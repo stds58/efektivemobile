@@ -1,9 +1,11 @@
+import os
 import logging
 import structlog
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.middleware.auth_logging_middleware import auth_logging_middleware
 from app.api.v1.base_router import v1_router
 from app.api.swagger_auth.auth import swagger_router
@@ -30,6 +32,12 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+CURRENT_FILE = os.path.abspath(__file__)
+CURRENT_DIR = os.path.dirname(CURRENT_FILE)
+STATIC_DIR = os.path.join(CURRENT_DIR, "static")
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 app.add_middleware(
     SessionMiddleware, secret_key=settings.SESSION_MIDDLEWARE_SECRET_KEY, max_age=3600
 )
@@ -55,11 +63,12 @@ app.add_middleware(
 )
 
 # Включить метрики
-#Теперь будет эндпоинт: http://fastapi-app:8000/metrics
+# Теперь будет эндпоинт: http://fastapi-app:8000/metrics
 Instrumentator().instrument(app).expose(app)
 
 app.include_router(v1_router)
 app.include_router(swagger_router)
+
 
 @app.get("/")
 def root():

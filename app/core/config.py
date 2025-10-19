@@ -2,6 +2,8 @@
 Класс настроек приложения
 """
 
+import os
+from typing import Set
 from functools import lru_cache
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
@@ -24,6 +26,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_HOURS: int
     ALGORITHM: str
+    FILE_SIZE_LIMIT_MB: int
+    ALLOW_FILE_EXTENSIONS: str
 
     DB_NAME: str
     DB_USER: str
@@ -43,6 +47,16 @@ class Settings(BaseSettings):
             f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@"
             f"{settings.DB_HOST}:{settings.DB_PORT_INTERNAL}/{settings.DB_NAME}"
         )
+
+    @property
+    def USER_UPLOADS_DIR(self) -> str:
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        user_uploads_dir = os.path.join(project_root, "uploads")
+        return user_uploads_dir
+
+    @property
+    def ALLOW_FILE_EXTENSION(self) -> Set[str]:
+        return self.ALLOW_FILE_EXTENSIONS.split(",")
 
     model_config = ConfigDict(extra="ignore")
 

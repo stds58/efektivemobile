@@ -63,9 +63,9 @@ async def login_for_access_token(
 
 @router.post("/logout")
 async def logout(
-        response: Response,
-        access_token: str = Cookie(None, alias="access_token"),
-        refresh_token: str = Cookie(None, alias="refresh_token"),
+    response: Response,
+    access_token: str = Cookie(None, alias="access_token"),
+    refresh_token: str = Cookie(None, alias="refresh_token"),
 ) -> dict:
     payload = AuthService.decode_access_token(token=access_token)
     user_id = payload.sub

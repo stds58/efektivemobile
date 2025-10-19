@@ -1,7 +1,7 @@
 from typing import Optional, AsyncGenerator
 import structlog
 from structlog.contextvars import bind_contextvars
-from fastapi import Cookie, Depends, HTTPException, Request
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -51,6 +51,7 @@ def auth_db_context(
     Фабрика зависимости для FastAPI, создающая асинхронную сессию с заданным уровнем изоляции.
     Сессия и пользователь в одном контексте.
     """
+
     async def dependency(
         token: str = Depends(get_token_from_either),
     ) -> AsyncGenerator[RequestContext, None]:

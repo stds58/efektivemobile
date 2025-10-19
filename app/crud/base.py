@@ -130,8 +130,8 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
         """добавляет 1 запись"""
         new_instance = cls.model(**values)
         session.add(new_instance)
-        # await session.flush()
-        # await session.refresh(new_instance)
+        await session.flush()
+        await session.refresh(new_instance)
         return new_instance
 
     @classmethod

@@ -8,6 +8,7 @@ class BusinessDomain(str, Enum):
     ORDER = "order"
     USER = "user"
     USER_ROLES = "user_roles"
+    FILE_UPLOAD = "fileupload"
 
 
 class IsolationLevel(str, Enum):

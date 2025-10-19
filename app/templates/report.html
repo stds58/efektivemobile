@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёт по РСО</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/report.css') }}">
+     <link rel="stylesheet" href="{{ url_for('static', path='/css/report_login.css') }}">
+</head>
+<body>
+    <!-- Панель авторизации -->
+    <div id="auth-bar" class="auth-bar">
+        <div id="login-form" class="login-form">
+            <input type="email" id="email" value="user@example.com" placeholder="Email" class="auth-input email-input">
+            <input type="password" id="password" value="user@example.com" placeholder="Пароль" class="auth-input password-input">
+            <button id="login-btn" class="btn btn-success">Войти</button>
+        </div>
+        <button id="logout-btn" class="btn btn-danger" style="display: none;">Выйти</button>
+    </div>
+
+    <div style="display: flex; gap: 20px;">
+        <!-- Левая панель -->
+        <div style="width: 300px;">
+            <h2>Загрузка и выбор</h2>
+            <!-- Форма загрузки файла -->
+            <div style="margin-bottom: 15px;">
+                <input type="file" id="file-input" accept=".xlsx,.xls" style="margin-bottom: 6px; width: 100%;">
+                <button id="upload-btn" class="btn" style="display: inline-block; padding: 8px 12px; background: #007bff; color: white; border: none; cursor: pointer; width: 100%;">Загрузить файл</button>
+            </div>
+
+            <label>Выберите файл:</label>
+            <select id="file-select" style="width: 100%; margin: 5px 0;">
+                <option value="">—</option>
+            </select>
+
+            <label>Выберите лист:</label>
+            <select id="sheet-select" disabled style="width: 100%; margin: 5px 0;">
+                <option value="">Сначала выберите файл</option>
+            </select>
+
+            <button id="generate-btn" disabled style="margin-top: 10px; padding: 8px 16px;">Построить отчёт по РСО</button>
+        </div>
+
+        <!-- Правая панель: отчёт -->
+        <div style="flex: 1;">
+            <h1>Просроченная задолженность по РСО</h1>
+            <table id="report-table" style="display: none; width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #4CAF50; color: white;">
+                        <th style="padding: 10px; text-align: left;">РСО</th>
+                        <th style="padding: 10px; text-align: right;">Сумма, ₽</th>
+                    </tr>
+                </thead>
+                <tbody id="report-body"></tbody>
+            </table>
+            <p id="placeholder">Отчёт появится после выбора файла и листа.</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', path='/js/report.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/report_login.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/report_upload_file.js') }}"></script>
+
+</body>
+</html>
