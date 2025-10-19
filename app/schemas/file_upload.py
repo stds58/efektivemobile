@@ -1,6 +1,5 @@
 from typing import Optional
 from datetime import datetime
-from pathlib import Path
 import re
 from uuid import UUID
 from pydantic import BaseModel, field_validator
@@ -29,6 +28,7 @@ class SchemaFileUploadCreate(BaseModel):
         if not field:
             raise FileNameError
         # Очищаем имя от опасных символов
+        # < > : " / \ | ? * ; & $ ` ' ! # % { } [ ] ~ ^ %20 \n \t \0
         clean_name = re.sub(r"[^a-zA-Z0-9._\-() ]", "_", field)
         clean_name = clean_name.strip()[:255]
         return clean_name
