@@ -20,7 +20,7 @@ https://github.com/stds58/efektivemobile.git
     1 в докере. по умолчанию
     2 на локальной машине. выключите контейнер fastapi
         docker-compose stop fastapi-app
-[запустите main.py](app/main.py)
+        запустите main.py app/main.py
 
 
 Данные из [sample_data.py](app/utils/sample_data.py) импортируются автоматически 
