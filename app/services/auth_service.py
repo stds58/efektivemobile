@@ -5,7 +5,12 @@ import structlog
 from pydantic import ValidationError
 from app.core.config import settings
 from app.core.security import verify_password, get_password_hash
-from app.exceptions.base import BlacklistedError, TokenExpiredError, BadCredentialsError
+from app.exceptions.base import (
+    BlacklistedError,
+    TokenExpiredError,
+    BadCredentialsError,
+    InvalidTokenError
+)
 from app.core.blacklist import token_blacklist
 from app.schemas.token import AccessToken, RefreshToken
 
@@ -48,9 +53,12 @@ class AuthService:
             )
             user_id = UUID(payload.get("sub"))
             return AccessToken(**payload)
+        except jwt.ExpiredSignatureError as exc:
+            logger.info("Token expired", error=str(exc))
+            raise TokenExpiredError
         except jwt.PyJWTError as exc:
-            logger.error("jwt.PyJWTError", error=str(exc), data=token)
-            raise TokenExpiredError from exc
+            logger.error("Invalid or malformed JWT", error=str(exc))
+            raise InvalidTokenError from exc
         except ValidationError as e:
             logger.error(
                 "Invalid token structure", error=str(e), user_id=user_id, data=token
@@ -87,6 +95,9 @@ class AuthService:
                 logger.error("jwt.InvalidTokenError", error="Is not a refresh token")
                 raise jwt.InvalidTokenError("Not a refresh token")
             return RefreshToken(**payload)
+        except jwt.ExpiredSignatureError as exc:
+            logger.info("Refresh token expired", error=str(exc))
+            raise TokenExpiredError(custom_detail="Refresh token expired")
         except jwt.PyJWTError as exc:
-            logger.error("jwt.PyJWTError", error=str(exc))
-            raise TokenExpiredError from exc
+            logger.error("Invalid or malformed JWT", error=str(exc))
+            raise InvalidTokenError from exc

@@ -50,6 +50,11 @@ class TokenExpiredError(CustomHTTPException):
     detail = "Token has expired"
 
 
+class InvalidTokenError(CustomHTTPException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Invalid or malformed JWT"
+
+
 class PermissionDenied(CustomHTTPException):
     status_code = status.HTTP_403_FORBIDDEN
     detail = "Permission denied"
