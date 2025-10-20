@@ -17,7 +17,7 @@ from app.schemas.permission import (
     SchemaUserRolesCreate,
     SchemaUserRolesFilter,
 )
-from app.schemas.token import Token
+from app.schemas.token import Token, AccessToken, RefreshToken
 from app.schemas.user import (
     SchemaUserCreate,
     SchemaUserPatch,
@@ -35,6 +35,7 @@ from app.exceptions.base import (
     UserInactiveError,
     PasswordMismatchError,
     PermissionDenied,
+    InvalidTokenError,
 )
 
 
@@ -171,33 +172,48 @@ async def get_user_roles(user_id: UUID, session: AsyncSession) -> List[str]:
     return [role.name for role in user.roles]
 
 
-async def set_token_in_cookie(response: Response, tokens: Token):
-    response.set_cookie(
-        key="access_token",
-        value=tokens.access_token,
-        httponly=True,
-        secure=True,
-        domain=None,
-        path="/",
-        samesite="strict",
-        max_age=60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-    )
+async def set_access_token_in_cookie(response: Response, access_token: AccessToken):
+    try:
+        response.delete_cookie("access_token")
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            domain=None,
+            path="/",
+            samesite="strict",
+            max_age=60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+        )
+        return {
+            "status": "success",
+            "access_expires_in": 60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        }
+    except Exception:
+        response.delete_cookie("access_token")
+        raise InvalidTokenError
 
-    response.set_cookie(
-        key="refresh_token",
-        value=tokens.refresh_token,
-        httponly=True,
-        secure=True,  # settings.SECURE_COOKIES
-        domain=None,
-        path="/",
-        samesite="strict",
-        max_age=60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
-    )
-    return {
-        "status": "success",
-        "access_expires_in": 60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-        "refresh_expires_in": 60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
-    }
+
+async def set_refresh_token_in_cookie(response: Response, refresh_token: RefreshToken):
+    try:
+        response.delete_cookie("refresh_token")
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,  # settings.SECURE_COOKIES
+            domain=None,
+            path="/",
+            samesite="strict",
+            max_age=60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
+        )
+        return {
+            "status": "success",
+            "refresh_expires_in": 60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS
+        }
+    except Exception:
+        response.delete_cookie("refresh_token")
+        raise InvalidTokenError
 
 
 async def authenticate_user(
@@ -268,6 +284,32 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
     AuthService.ban_token(refresh_token)
 
     return Token(access_token=new_access, refresh_token=new_refresh)
+
+
+async def refresh_access_token(refresh_token: str, session: AsyncSession) -> AccessToken:
+    payload = AuthService.decode_refresh_token(refresh_token)
+    user_id = payload.sub
+    if not user_id:
+        logger.error("BadCredentialsError")
+        raise BadCredentialsError
+
+    fake_uuid = uuid4()
+    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
+    user = await get_user_by_id(access=access, user_id=user_id, session=session)
+
+    if not user:
+        logger.error("BadCredentialsError")
+        raise BadCredentialsError
+    if not user.is_active:
+        logger.error("UserInactiveError")
+        raise UserInactiveError
+
+    role_names = await get_user_roles(user_id=user.id, session=session)
+    new_access = AuthService.create_access_token(
+        data={"sub": str(user.id), "role": role_names}
+    )
+    access_token = new_access
+    return access_token
 
 
 async def add_role_to_user(

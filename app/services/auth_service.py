@@ -29,15 +29,18 @@ class AuthService:
 
     @staticmethod
     def create_access_token(data: dict) -> str:
-        to_encode = data.copy()
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
-        encoded_jwt = jwt.encode(
-            to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-        )
-        return encoded_jwt
+        try:
+            to_encode = data.copy()
+            expire = datetime.now(timezone.utc) + timedelta(
+                minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            )
+            to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
+            encoded_jwt = jwt.encode(
+                to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+            )
+            return encoded_jwt
+        except Exception:
+            raise InvalidTokenError
 
     @staticmethod
     def decode_access_token(token: str) -> AccessToken:
@@ -72,15 +75,18 @@ class AuthService:
 
     @staticmethod
     def create_refresh_token(data: dict) -> str:
-        to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(
-            hours=settings.REFRESH_TOKEN_EXPIRE_HOURS
-        )
-        to_encode.update({"exp": expire, "iat": datetime.utcnow(), "type": "refresh"})
-        encoded_jwt = jwt.encode(
-            to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-        )
-        return encoded_jwt
+        try:
+            to_encode = data.copy()
+            expire = datetime.utcnow() + timedelta(
+                hours=settings.REFRESH_TOKEN_EXPIRE_HOURS
+            )
+            to_encode.update({"exp": expire, "iat": datetime.utcnow(), "type": "refresh"})
+            encoded_jwt = jwt.encode(
+                to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+            )
+            return encoded_jwt
+        except Exception:
+            raise InvalidTokenError
 
     @staticmethod
     def decode_refresh_token(token: str) -> RefreshToken:

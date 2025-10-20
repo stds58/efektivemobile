@@ -1,3 +1,4 @@
+from typing import List
 from uuid import uuid4
 import structlog
 from fastapi import APIRouter, Depends, status, Cookie, HTTPException, Response
@@ -8,8 +9,10 @@ from app.services.auth_service import AuthService
 from app.services.user import (
     create_user,
     authenticate_user_api,
-    refresh_user_tokens,
-    set_token_in_cookie,
+    refresh_access_token,
+    #refresh_user_tokens,
+    set_access_token_in_cookie,
+    set_refresh_token_in_cookie,
     get_user_by_email,
 )
 from app.dependencies.get_db import connection
@@ -44,7 +47,7 @@ async def login_for_access_token(
     form_data: SchemaUserLogin,
     response: Response,
     session: AsyncSession = Depends(connection()),
-) -> dict:
+) -> List[dict]:
     filters = SchemaUserLogin(email=form_data.email, password="*****")
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
@@ -56,8 +59,10 @@ async def login_for_access_token(
     tokens = await authenticate_user_api(user_in=form_data, session=session)
     logger.info("Logined user", user_id=user.id, filters=filters)
 
-    message = await set_token_in_cookie(response=response, tokens=tokens)
-    logger.info("Set token in cookie", user_id=user.id)
+    message_access = await set_access_token_in_cookie(response=response, access_token=tokens.access_token)
+    message_refresh = await set_refresh_token_in_cookie(response=response, refresh_token=tokens.refresh_token)
+    message = [message_access, message_refresh]
+    logger.info("Seted tokens in cookie", user_id=user.id)
     return message
 
 
@@ -104,17 +109,11 @@ async def refresh_token_endpoint(
     payload = AuthService.decode_refresh_token(token=refresh_token)
     user_id = payload.sub
 
-    logger.debug("Refresh token", user_id=user_id)
-    tokens = await refresh_user_tokens(refresh_token=refresh_token, session=session)
-    logger.info("Refreshed token", user_id=user_id)
+    logger.debug("Refresh access token", user_id=user_id)
+    access_token = await refresh_access_token(refresh_token=refresh_token, session=session)
+    logger.info("Refreshed access token", user_id=user_id)
 
-    logger.debug("Ban old refresh token", user_id=user_id)
-    AuthService.ban_token(refresh_token)
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
-    logger.info("Baned old refresh token. deleted cookie", user_id=user_id)
-
-    message = await set_token_in_cookie(response=response, tokens=tokens)
-    logger.info("Seted tokens in cookie", user_id=user_id)
+    message = await set_access_token_in_cookie(response=response, access_token=access_token)
+    logger.info("Seted access token in cookie", user_id=user_id)
 
     return message
