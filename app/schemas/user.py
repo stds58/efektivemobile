@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List
 from uuid import UUID
 import structlog
 from pydantic import (
@@ -9,9 +9,10 @@ from pydantic import (
     StringConstraints,
     field_validator,
     model_validator,
+    ConfigDict,
 )
 from app.exceptions.base import PasswordMismatchError, MissingLoginCredentialsException
-
+from app.schemas.role import SchemaRoleBase
 
 logger = structlog.get_logger()
 
@@ -23,7 +24,10 @@ class SchemaUserBase(BaseModel):
     email: EmailStr
     first_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     last_name: Annotated[str, StringConstraints(min_length=3, max_length=50)]
+    roles: Optional[List[SchemaRoleBase]] = None
     is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SchemaUserFilter(BaseModel):
@@ -68,6 +72,15 @@ class SchemaUserPatch(BaseModel):
     ) = Field(None)
     last_name: Annotated[str, StringConstraints(min_length=3, max_length=50)] | None = (
         Field(None)
+    )
+
+
+class SchemaChangePassword(BaseModel):
+    password: str = Field(
+        ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
+    )
+    password_confirm: str = Field(
+        ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
     )
 
 

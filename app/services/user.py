@@ -9,8 +9,11 @@ from app.core.security import get_password_hash
 from app.crud.role import RoleDAO
 from app.models import User
 from app.crud.user import UserDAO, UserPasswordDAO
+from app.crud.user_role import UserRoleDAO
 from app.schemas.base import PaginationParams
 from app.schemas.role import SchemaRoleFilter
+from app.schemas.user import SchemaUserFilter
+from app.schemas.user_role import SchemaUserRoleFilter
 from app.schemas.permission import (
     AccessContext,
     SchemaUserRolesBase,
@@ -29,6 +32,7 @@ from app.schemas.user import (
 )
 from app.services.auth_service import AuthService
 from app.services.base_scoped_operations import find_many_scoped
+from app.services.user_role import find_many_user_role
 from app.exceptions.base import (
     BadCredentialsError,
     EmailAlreadyRegisteredError,
@@ -226,6 +230,27 @@ async def authenticate_user(
     fake_uuid = uuid4()
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
     user = await get_user_by_email(access=access, email=login, session=session)
+
+    filters = SchemaUserFilter(
+    id=None,
+    created_at=None,
+    updated_at=None,
+    email=None,
+    first_name=None,
+    last_name=None,
+    is_active=None,)
+
+    user_roles = await find_many_user_role(
+        business_element="user_roles",
+        access=access,
+        filters=filters,
+        session = session,
+        pagination=PaginationParams(page=1,per_page=10),
+    )
+
+    #print('user_roles ======= ', user_roles)
+
+
 
     if not user:
         logger.error("в БД отсутствует user_id", user_id=user.id)

@@ -73,7 +73,6 @@ def auth_db_context(
                     if business_element
                     else None,
                     isolation_level=isolation_level,
-                    #commit=commit,
                     session_id=session_id,
                     transaction_id=transaction_id
                 )

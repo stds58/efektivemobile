@@ -1,7 +1,8 @@
+from typing import List
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import Role, BusinessElement, AccessRule, User, Category, Product, Order
+from app.models import Role, BusinessElement, AccessRule, User, Category, Product, Order, UserRole
 from app.utils.sample_data import (
     BUSINESS_ELEMENTS_DATA,
     ROLES_DATA,
@@ -81,9 +82,6 @@ async def seed_users(session: AsyncSession):
     existing_emails = {
         email async for email in await session.stream_scalars(select(User.email))
     }
-    roles = {
-        role.name: role async for role in await session.stream_scalars(select(Role))
-    }
 
     for user_data in USERS_DATA:
         if user_data["email"] in existing_emails:
@@ -91,9 +89,7 @@ async def seed_users(session: AsyncSession):
                 select(User).where(User.email == user_data["email"])
             )
             user = result.scalar_one_or_none()
-            if not user.roles:
-                user.roles = [roles[name] for name in user_data["role_names"]]
-                session.add(user)
+            session.add(user)
             continue
 
         user = User(
@@ -103,10 +99,48 @@ async def seed_users(session: AsyncSession):
             last_name=user_data["last_name"],
             is_active=user_data.get("is_active", True),
         )
-        user.roles = [roles[name] for name in user_data["role_names"]]
         session.add(user)
     await session.commit()
 
+
+async def seed_role_user(session: AsyncSession):
+    from app.models.user_role import UserRole
+
+    # 1. Получаем всех пользователей из БД по email
+    result = await session.execute(select(User.email, User.id))
+    user_email_to_id = {email: user_id for email, user_id in result}
+
+    # 2. Получаем все роли по имени
+    result = await session.execute(select(Role.name, Role.id))
+    role_name_to_id = {name: role_id for name, role_id in result}
+
+    # 3. Получаем уже существующие связи (user_id, role_id)
+    result = await session.execute(select(UserRole.user_id, UserRole.role_id))
+    existing_pairs = {(row.user_id, row.role_id) for row in result}
+
+    # 4. Для каждого пользователя из USERS_DATA — назначаем недостающие роли
+    for user_data in USERS_DATA:
+        email = user_data["email"]
+        if email not in user_email_to_id:
+            logger.warning("User not found in DB, skipping roles", email=email)
+            continue
+
+        user_id = user_email_to_id[email]
+
+        for role_name in user_data["role_names"]:
+            if role_name not in role_name_to_id:
+                logger.warning("Role not found", role=role_name, email=email)
+                continue
+
+            role_id = role_name_to_id[role_name]
+            if (user_id, role_id) in existing_pairs:
+                continue  # уже есть — пропускаем
+
+            # Добавляем новую связь
+            session.add(UserRole(user_id=user_id, role_id=role_id))
+            existing_pairs.add((user_id, role_id))  # чтобы не дублировать в рамках одного запуска
+
+    await session.commit()
 
 async def seed_categories(session: AsyncSession):
     existing_names = {
@@ -218,6 +252,12 @@ async def seed_all():
         except Exception as e:
             await session.rollback()
             logger.error("Error while creating users", error=str(e))
+
+        try:
+            await seed_role_user(session)
+        except Exception as e:
+            await session.rollback()
+            logger.error("Error while role_user", error=str(e))
 
         try:
             await seed_categories(session)

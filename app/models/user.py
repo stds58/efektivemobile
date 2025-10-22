@@ -5,17 +5,6 @@ from app.models.base import Base, StrUniq, StrNullFalse, StrNullTrue, BoolDefTru
 from app.models.role import Role
 
 
-user_role_association = Table(
-    "user_roles",
-    Base.metadata,
-    Column("user_id", ForeignKey("user.id"), primary_key=True),
-    Column("role_id", ForeignKey("role.id"), primary_key=True),
-    Column(
-        "created_at", DateTime(timezone=True), server_default=func.now(), nullable=False
-    ),
-)
-
-
 class User(Base):
     email: Mapped[StrUniq]
     password: Mapped[StrNullFalse]
@@ -23,11 +12,10 @@ class User(Base):
     last_name: Mapped[StrNullTrue]
     is_active: Mapped[BoolDefTrue]
 
-    roles: Mapped[List["Role"]] = relationship(
-        "Role",
-        secondary=user_role_association,
+    user_roles: Mapped[List["UserRole"]] = relationship(
+        "UserRole",
         back_populates="users",
-        lazy="selectin",  # Для асинхронной загрузки ролей вместе с пользователем
+        lazy="selectin",
     )
 
     orders: Mapped[List["Order"]] = relationship(

@@ -8,12 +8,15 @@ from app.api.v1.access_rule import router as access_rule_router
 from app.api.v1.permission import router as permission_router
 from app.api.v1.file_upload import router as upload_router
 from app.api.v1.report import router as report_router
+from app.api.v1.user_role import router as user_role_router
+
 
 v1_router = APIRouter(prefix="/v1")
 
 
 v1_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 v1_router.include_router(user_router, prefix="/users", tags=["user"])
+v1_router.include_router(user_role_router, prefix="/user_role", tags=["user"])
 v1_router.include_router(product_router, prefix="/products", tags=["product"])
 v1_router.include_router(category_router, prefix="/categorys", tags=["category"])
 v1_router.include_router(order_router, prefix="/orders", tags=["order"])
