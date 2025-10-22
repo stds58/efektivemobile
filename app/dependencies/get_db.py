@@ -46,7 +46,6 @@ async def get_token_from_either(request: Request) -> str:
 def auth_db_context(
     business_element: Optional[BusinessDomain] = None,
     isolation_level: Optional[str] = IsolationLevel.READ_COMMITTED,
-    commit: bool = False, #убрать коммит
 ):
     """
     Фабрика зависимости для FastAPI, создающая асинхронную сессию с заданным уровнем изоляции.
