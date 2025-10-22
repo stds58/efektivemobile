@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import BusinessDomain
 from app.crud.user_role import UserRoleDAO
 from app.crud.role import RoleDAO
+from app.crud.user_m2m_role import UserRoleM2MDAO
 from app.schemas.base import PaginationParams
 from app.schemas.user_role import (
     SchemaUserRoleCreate,
@@ -14,9 +15,8 @@ from app.services.base import (
     find_many_business_element,
     add_one_business_element,
     delete_one_business_element,
-    find_many_business_element_m2m,
 )
-
+from app.services.base_m2m import find_one_m2m, find_many_m2m
 
 logger = structlog.get_logger()
 
@@ -28,9 +28,27 @@ async def find_many_user_role(
     session: AsyncSession,
     pagination: PaginationParams,
 ):
-    user_roles = await find_many_business_element_m2m(
+    user_roles = await find_many_m2m(
         business_element=business_element,
-        methodDAO=UserRoleDAO,
+        methodDAO=UserRoleM2MDAO,
+        access=access,
+        filters=filters,
+        session=session,
+        pagination=pagination,
+    )
+    return user_roles
+
+
+async def find_one_user_role(
+    business_element: BusinessDomain,
+    access: AccessContext,
+    filters: SchemaUserRoleFilter,
+    session: AsyncSession,
+    pagination: PaginationParams,
+):
+    user_roles = await find_one_m2m(
+        business_element=business_element,
+        methodDAO=UserRoleM2MDAO,
         access=access,
         filters=filters,
         session=session,

@@ -133,7 +133,7 @@ class M2MDAO(Generic[SourceModel, ThroughModel, TargetModel, SourceSchema, Filte
             cls,
             session: AsyncSession,
             filters: Optional[FilterSchemaType] = None
-    ) -> List[SourceSchema]:
+    ) -> SourceSchema:
         query = cls._build_m2m_query()
         if filters is not None:
             query = cls._apply_filters(query, filters)
@@ -141,7 +141,8 @@ class M2MDAO(Generic[SourceModel, ThroughModel, TargetModel, SourceSchema, Filte
         rows = result.all()
         aggregated_sources = cls._aggregate_m2m_results(rows, cls.target_attr_name)
 
-        return [
-            cls.source_schema.model_validate(obj, from_attributes=True)
-            for obj in aggregated_sources
-        ]
+        return cls.source_schema.model_validate(aggregated_sources[0], from_attributes=True)
+        #     [
+        #     cls.source_schema.model_validate(obj, from_attributes=True)
+        #     for obj in aggregated_sources
+        # ]

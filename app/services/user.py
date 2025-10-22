@@ -32,7 +32,7 @@ from app.schemas.user import (
 )
 from app.services.auth_service import AuthService
 from app.services.base_scoped_operations import find_many_scoped
-from app.services.user_role import find_many_user_role
+from app.services.user_role import find_one_user_role, find_many_user_role
 from app.exceptions.base import (
     BadCredentialsError,
     EmailAlreadyRegisteredError,
@@ -231,27 +231,6 @@ async def authenticate_user(
     access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
     user = await get_user_by_email(access=access, email=login, session=session)
 
-    filters = SchemaUserFilter(
-    id=None,
-    created_at=None,
-    updated_at=None,
-    email=None,
-    first_name=None,
-    last_name=None,
-    is_active=None,)
-
-    user_roles = await find_many_user_role(
-        business_element="user_roles",
-        access=access,
-        filters=filters,
-        session = session,
-        pagination=PaginationParams(page=1,per_page=10),
-    )
-
-    #print('user_roles ======= ', user_roles)
-
-
-
     if not user:
         logger.error("в БД отсутствует user_id", user_id=user.id)
         raise BadCredentialsError
@@ -262,7 +241,24 @@ async def authenticate_user(
     if not await AuthService.verify_password(user_in.password, hash_password):
         raise BadCredentialsError
 
-    role_names = await get_user_roles(user_id=user.id, session=session)
+    filters = SchemaUserFilter(
+        id=user.id,
+        created_at=None,
+        updated_at=None,
+        email=None,
+        first_name=None,
+        last_name=None,
+        is_active=None,
+    )
+    user_roles = await find_one_user_role(
+        business_element="user_roles",
+        access=access,
+        filters=filters,
+        session=session,
+        pagination=PaginationParams(page=1, per_page=10),
+    )
+
+    role_names = [role.name for role in user_roles.roles]
     access_token = AuthService.create_access_token(
         data={"sub": str(user.id), "role": role_names}
     )

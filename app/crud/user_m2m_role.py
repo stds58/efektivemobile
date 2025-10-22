@@ -5,7 +5,7 @@ from app.schemas.user import SchemaUserBase, SchemaUserFilter
 from app.crud.base_m2m import M2MDAO
 
 
-class UserRolesDAO(M2MDAO[User, UserRole, Role, SchemaUserBase, SchemaUserFilter]):
+class UserRoleM2MDAO(M2MDAO[User, UserRole, Role, SchemaUserBase, SchemaUserFilter]):
     source_model = User
     through_model = UserRole
     target_model = Role
