@@ -2,7 +2,7 @@ from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
-from app.dependencies.get_db import auth_db_context
+from app.dependencies.private_router import private_route_dependency
 from app.schemas.order import (
     SchemaOrderBase,
     SchemaOrderCreate,
@@ -29,12 +29,9 @@ OWNER_FIELD = "user_id"
 
 @router.get("", summary="Get orders")
 async def get_orders(
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.ORDER,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.ORDER,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
     filters: SchemaOrderFilter = Depends(),
     pagination: PaginationParams = Depends(),
@@ -58,12 +55,9 @@ async def get_orders(
 @router.post("", summary="Create order")
 async def create_order(
     data: SchemaOrderCreate,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.ORDER,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.ORDER,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Add order", data=data)
@@ -81,12 +75,9 @@ async def create_order(
 async def edit_order(
     order_id: UUID,
     data: SchemaOrderPatch,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.ORDER,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.ORDER,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Update order", data=data, model_id=order_id)
@@ -106,12 +97,9 @@ async def edit_order(
 )
 async def delete_product(
     order_id: UUID,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.ORDER,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.ORDER,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Delete order", model_id=order_id)

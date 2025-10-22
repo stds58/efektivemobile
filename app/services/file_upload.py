@@ -62,13 +62,14 @@ async def find_many_file_upload(
     session: AsyncSession,
     pagination: PaginationParams,
 ):
-    return await find_many_business_element(
+    return await find_many_scoped(
         business_element=business_element,
         methodDAO=FileUploadDAO,
         access=access,
         filters=filters,
         session=session,
         pagination=pagination,
+        owner_field="user_id",
     )
 
 
@@ -104,13 +105,26 @@ async def delete_one_file_upload(
     session: AsyncSession,
     file_upload_id: UUID,
 ):
-    return await delete_one_business_element(
+    file_upload = await delete_one_scoped(
         business_element=business_element,
         methodDAO=FileUploadDAO,
         access=access,
         session=session,
         business_element_id=file_upload_id,
     )
+
+    file_upload_id = str(file_upload.id)
+    file_path = os.path.join(
+        settings.USER_UPLOADS_DIR, f"{file_upload_id}{file_upload.extension}"
+    )
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        print("Файл удалён")
+    else:
+        print("Файл не существует")
+
+    return file_upload
 
 
 async def read_content_file(

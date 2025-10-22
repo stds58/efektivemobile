@@ -151,7 +151,7 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
 
         await session.delete(obj)
         # await session.commit()
-        return True
+        return obj
 
     @classmethod
     async def delete_many_by_ids(cls, session: AsyncSession, ids: List[UUID]) -> dict:
@@ -162,7 +162,6 @@ class BaseDAO(FiltrMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
 
         stmt = delete(cls.model).where(cls.model.id.in_(ids))
         result = await session.execute(stmt)
-        await session.commit()
         return result.rowcount
 
     @classmethod

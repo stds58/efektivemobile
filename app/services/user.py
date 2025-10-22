@@ -99,27 +99,30 @@ async def update_user(
         filters_dict["password"] = password_hash
 
     if "update_all_permission" in access.permissions:
-        await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-    elif "update_permission" in access.permissions and user_id == access.user_id:
-        await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-    else:
-        logger.error("PermissionDenied")
-        raise PermissionDenied(
-            custom_detail="Missing update or update_all permission on user"
-        )
+        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
+        await session.commit()
+        return result
+    if "update_permission" in access.permissions and user_id == access.user_id:
+        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
+        await session.commit()
+        return result
 
-    user = await get_user_by_id(access=access, user_id=user_id, session=session)
-    return user
+    logger.error("PermissionDenied")
+    raise PermissionDenied(
+        custom_detail="Missing update or update_all permission on user"
+    )
 
 
 async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncSession):
     filters_dict = {"id": user_id, "is_active": False}
     if "delete_all_permission" in access.permissions:
-        await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-        return
+        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
+        await session.commit()
+        return result
     if "delete_permission" in access.permissions and user_id == access.user_id:
-        await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-        return
+        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
+        await session.commit()
+        return result
     logger.error("PermissionDenied")
     raise PermissionDenied(
         custom_detail="Missing delete or delete_all permission on user"

@@ -2,13 +2,10 @@ from typing import List
 from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.schemas.user import SchemaUserPatch, SchemaUserFilter, SchemaUserBase
 from app.services.user import find_many_user, update_user, soft_delete_user
-from app.dependencies.get_db import connection, auth_db_context
-from app.dependencies.permissions import require_permission
-from app.schemas.permission import AccessContext
+from app.dependencies.private_router import private_route_dependency
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
 
@@ -21,12 +18,9 @@ router = APIRouter()
 
 @router.get("", summary="Get users", response_model=List[SchemaUserBase])
 async def get_users(
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.USER,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.USER,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
     filters: SchemaUserFilter = Depends(),
     pagination: PaginationParams = Depends(),
@@ -46,11 +40,13 @@ async def get_users(
 async def edit_user(
     user_id: UUID,
     user_in: SchemaUserPatch,
-    session: AsyncSession = Depends(connection()),
-    access: AccessContext = Depends(require_permission("user")),
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.USER,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
+    ),
 ):
     updated_user = await update_user(
-        access=access, filters=user_in, session=session, user_id=user_id
+        access=request_context.access, filters=user_in, session=request_context.session, user_id=user_id
     )
     return updated_user
 
@@ -60,8 +56,10 @@ async def edit_user(
 )
 async def unactivate_user(
     user_id: UUID,
-    session: AsyncSession = Depends(connection()),
-    access: AccessContext = Depends(require_permission("user")),
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.USER,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
+    ),
 ):
-    await soft_delete_user(access=access, session=session, user_id=user_id)
+    await soft_delete_user(access=request_context.access, session=request_context.session, user_id=user_id)
     return

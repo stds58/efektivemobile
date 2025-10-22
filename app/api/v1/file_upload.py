@@ -1,9 +1,9 @@
 from pathlib import Path
 from uuid import UUID
 import structlog
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from app.core.enums import BusinessDomain, IsolationLevel
-from app.dependencies.get_db import auth_db_context
+from app.dependencies.private_router import private_route_dependency
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
 from app.schemas.file_upload import (
@@ -16,6 +16,7 @@ from app.services.file_upload import (
     find_many_file_upload,
     add_one_file_upload,
     read_content_file,
+    delete_one_file_upload,
 )
 
 
@@ -28,12 +29,9 @@ OWNER_FIELD = "user_id"
 
 @router.get("", summary="Upload file")
 async def get_upload_files(
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.FILE_UPLOAD,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
     filters: SchemaFileUploadFilter = Depends(),
     pagination: PaginationParams = Depends(),
@@ -63,12 +61,9 @@ async def get_upload_files(
 @router.get("/{file_upload_id}", summary="Get sheets in excell file")
 async def get_sheets(
     file_upload_id: UUID,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.FILE_UPLOAD,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Get sheet", model_id=file_upload_id)
@@ -86,12 +81,9 @@ async def get_sheets(
 async def get_content(
     file_upload_id: UUID,
     sheet_name: str = None,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.FILE_UPLOAD,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Get content", model_id=file_upload_id)
@@ -108,12 +100,9 @@ async def get_content(
 
 @router.post("", summary="Upload file")
 async def upload_file(
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.FILE_UPLOAD,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
     file: UploadFile = File(...),
 ) -> SchemaFileUploadBase:
@@ -134,3 +123,24 @@ async def upload_file(
     logger.info("Uploaded file", data=data)
 
     return file_upload
+
+
+@router.delete(
+    "/{file_upload_id}", summary="Delete file", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_product(
+    file_upload_id: UUID,
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
+    ),
+):
+    logger.info("Delete file", model_id=file_upload_id)
+    await delete_one_file_upload(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        access=request_context.access,
+        session=request_context.session,
+        file_upload_id=file_upload_id,
+    )
+    logger.info("Deleted file", model_id=file_upload_id)
+    return

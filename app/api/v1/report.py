@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.core.enums import BusinessDomain, IsolationLevel
+from app.dependencies.private_router import private_route_dependency
 from app.services.report import get_report
 from app.schemas.permission import RequestContext
 from app.dependencies.get_db import auth_db_context
@@ -28,12 +29,9 @@ async def generate_report(
     file_upload_id: UUID,
     extension: str,
     sheet_name: str,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.FILE_UPLOAD,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.FILE_UPLOAD,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Get content", model_id=file_upload_id)

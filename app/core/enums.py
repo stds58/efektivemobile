@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class BusinessDomain(str, Enum):
-    ACCESS_RULES = "access_rules"
+    ACCESS_RULES = "access_rule"
     CATEGORY = "category"
     PRODUCT = "product"
     ORDER = "order"

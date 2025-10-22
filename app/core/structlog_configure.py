@@ -45,6 +45,8 @@ def ordered_json_processor(logger, method_name, event_dict):
         "owner_field",
         "filters",
         "pagination",
+        "session_id",
+        "transaction_id",
         "isolation_level",
         "commit",
         "filename",

@@ -2,7 +2,7 @@ from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
-from app.dependencies.get_db import auth_db_context
+from app.dependencies.private_router import private_route_dependency
 from app.schemas.category import (
     SchemaCategoryBase,
     SchemaCategoryCreate,
@@ -26,12 +26,9 @@ router = APIRouter()
 
 @router.get("", summary="Get categorys")
 async def get_categorys(
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.CATEGORY,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.CATEGORY,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
     filters: SchemaCategoryFilter = Depends(),
     pagination: PaginationParams = Depends(),
@@ -51,12 +48,9 @@ async def get_categorys(
 @router.post("", summary="Create category")
 async def create_category(
     data: SchemaCategoryCreate,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.CATEGORY,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.CATEGORY,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Add category", data=data)
@@ -76,12 +70,9 @@ async def create_category(
 async def edit_product(
     category_id: UUID,
     data: SchemaCategoryPatch,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.CATEGORY,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.CATEGORY,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Update category", data=data, model_id=category_id)
@@ -101,12 +92,9 @@ async def edit_product(
 )
 async def delete_category(
     category_id: UUID,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.CATEGORY,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.CATEGORY,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Delete category", model_id=category_id)

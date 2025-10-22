@@ -3,6 +3,7 @@ import structlog
 from structlog.contextvars import bind_contextvars
 from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
@@ -45,7 +46,7 @@ async def get_token_from_either(request: Request) -> str:
 def auth_db_context(
     business_element: Optional[BusinessDomain] = None,
     isolation_level: Optional[str] = IsolationLevel.READ_COMMITTED,
-    commit: bool = True,
+    commit: bool = False, #убрать коммит
 ):
     """
     Фабрика зависимости для FastAPI, создающая асинхронную сессию с заданным уровнем изоляции.
@@ -58,6 +59,10 @@ def auth_db_context(
         async with get_session_with_isolation(
             async_session_maker, isolation_level
         ) as session:
+            session_id_obj = (await session.execute(text("SELECT pg_backend_pid()")))
+            session_id = session_id_obj.scalar_one()
+            transaction_id_obj = await session.execute(text("SELECT txid_current()"))
+            transaction_id = transaction_id_obj.scalar()
             try:
                 access = await get_payload_from_jwt(
                     token=token, business_element=business_element, session=session
@@ -69,7 +74,9 @@ def auth_db_context(
                     if business_element
                     else None,
                     isolation_level=isolation_level,
-                    commit=commit,
+                    #commit=commit,
+                    session_id=session_id,
+                    transaction_id=transaction_id
                 )
 
                 logger.info(
@@ -77,8 +84,6 @@ def auth_db_context(
                     user_id=access.user_id,
                 )
                 yield RequestContext(session=session, access=access)
-                if commit and session.in_transaction():
-                    await session.commit()
             except IntegrityError as exc:
                 logger.error("IntegrityError", error=str(exc))
                 if session.in_transaction():

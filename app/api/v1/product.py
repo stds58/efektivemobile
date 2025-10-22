@@ -2,7 +2,7 @@ from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
-from app.dependencies.get_db import auth_db_context
+from app.dependencies.private_router import private_route_dependency
 from app.schemas.product import (
     SchemaProductBase,
     SchemaProductCreate,
@@ -27,12 +27,9 @@ router = APIRouter()
 
 @router.get("", summary="Get products")
 async def get_products(
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.PRODUCT,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=False,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.PRODUCT,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
     filters: SchemaProductFilter = Depends(),
     pagination: PaginationParams = Depends(),
@@ -52,12 +49,9 @@ async def get_products(
 @router.post("", summary="Create product")
 async def create_product(
     data: SchemaProductCreate,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.PRODUCT,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.PRODUCT,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Add product", data=data)
@@ -77,12 +71,9 @@ async def create_product(
 async def edit_product(
     product_id: UUID,
     data: SchemaProductPatch,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.PRODUCT,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.PRODUCT,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Update product", data=data, model_id=product_id)
@@ -102,12 +93,9 @@ async def edit_product(
 )
 async def delete_product(
     product_id: UUID,
-    request_context: RequestContext = Depends(
-        auth_db_context(
-            business_element=BusinessDomain.PRODUCT,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-            commit=True,
-        )
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.PRODUCT,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Delete product", model_id=product_id)
