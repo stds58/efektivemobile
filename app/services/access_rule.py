@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import Optional
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.enums import BusinessDomain
+from app.core.enums import BusinessDomain, Permission
 from app.crud.access_rule import AccessRuleDAO
 from app.crud.business_element import BusinessElementDAO
 from app.schemas.base import PaginationParams
@@ -79,22 +79,13 @@ async def get_user_access_rules_for_business_element(
         session=session,
     )
 
-    ACCESS_PERMISSION_FIELDS = {
-        "read_permission": "read_permission",
-        "read_all_permission": "read_all_permission",
-        "create_permission": "create_permission",
-        "update_permission": "update_permission",
-        "update_all_permission": "update_all_permission",
-        "delete_permission": "delete_permission",
-        "delete_all_permission": "delete_all_permission",
-    }
-
     if not access_rule:
         return []
 
-    active_permissions = []
-    for field_name, permission_name in ACCESS_PERMISSION_FIELDS.items():
-        if getattr(access_rule, field_name, False):
-            active_permissions.append(permission_name)
+    active_permissions = [
+        perm.value
+        for perm in Permission
+        if getattr(access_rule, perm.value, False)
+    ]
 
     return active_permissions

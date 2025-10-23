@@ -15,3 +15,13 @@ class IsolationLevel(str, Enum):
     READ_COMMITTED = "READ COMMITTED"
     REPEATABLE_READ = "REPEATABLE READ"
     SERIALIZABLE = "SERIALIZABLE"
+
+
+class Permission(str, Enum):
+    READ = "read_permission"
+    READ_ALL = "read_all_permission"
+    CREATE = "create_permission"
+    UPDATE = "update_permission"
+    UPDATE_ALL = "update_all_permission"
+    DELETE = "delete_permission"
+    DELETE_ALL = "delete_all_permission"

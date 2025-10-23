@@ -3,17 +3,10 @@ from uuid import UUID
 import structlog
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.enums import BusinessDomain
+from app.core.enums import BusinessDomain, Permission
 from app.schemas.base import PaginationParams
 from app.schemas.permission import AccessContext
-from app.schemas.user import SchemaUserBase, SchemaUserFilter
 from app.exceptions.base import PermissionDenied
-from app.models.user import User
-from app.models.role import Role
-from app.models.user_role import UserRole
-#from collections import defaultdict
-from app.schemas.user import SchemaUserBase
-from app.crud.user_m2m_role import UserRoleM2MDAO
 
 
 logger = structlog.get_logger()
@@ -27,17 +20,17 @@ async def find_many_m2m(
     filters: Optional[BaseModel] = None,
     pagination: Optional[PaginationParams] = None,
 ):
-    if "read_all_permission" in access.permissions:
-        logger.info("read_all_permission", filters=filters, pagination=pagination)
+    if Permission.READ_ALL in access.permissions:
+        logger.info(Permission.READ_ALL.value, filters=filters, pagination=pagination)
         result = await methodDAO.find_many(session=session, filters=filters)
         return result
 
-    if "read_permission" in access.permissions:
-        logger.info("read_permission", filters=filters, pagination=pagination)
+    if Permission.READ in access.permissions:
+        logger.info(Permission.READ.value, filters=filters, pagination=pagination)
         result = await methodDAO.find_many(session=session, filters=filters)
         return result
 
-    custom_detail = f"Missing read or read_all permission on {business_element.value}"
+    custom_detail = f"Missing {Permission.READ.value} or {Permission.READ_ALL.value} on {business_element.value}"
     logger.error("PermissionDenied", error=custom_detail)
     raise PermissionDenied(custom_detail=custom_detail)
 
@@ -48,18 +41,17 @@ async def find_one_m2m(
     access: AccessContext,
     session: AsyncSession,
     filters: Optional[BaseModel] = None,
-    pagination: Optional[PaginationParams] = None,
 ):
-    if "read_all_permission" in access.permissions:
-        logger.info("read_all_permission", filters=filters, pagination=pagination)
+    if Permission.READ_ALL in access.permissions:
+        logger.info(Permission.READ_ALL.value, filters=filters)
         result = await methodDAO.find_one(session=session, filters=filters)
         return result
 
-    if "read_permission" in access.permissions:
-        logger.info("read_permission", filters=filters, pagination=pagination)
+    if Permission.READ in access.permissions:
+        logger.info(Permission.READ.value, filters=filters)
         result = await methodDAO.find_one(session=session, filters=filters)
         return result
 
-    custom_detail = f"Missing read or read_all permission on {business_element.value}"
+    custom_detail = f"Missing {Permission.READ.value} or {Permission.READ_ALL.value} on {business_element.value}"
     logger.error("PermissionDenied", error=custom_detail)
     raise PermissionDenied(custom_detail=custom_detail)
