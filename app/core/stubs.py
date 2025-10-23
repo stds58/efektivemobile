@@ -7,6 +7,11 @@ def create_fake_access_context():
     fake_uuid = uuid4()
     access = AccessContext(
         user_id=fake_uuid,
-        permissions=[Permission.READ_ALL.value, Permission.CREATE.value]
+        permissions=[
+            Permission.CREATE.value,
+            Permission.READ_ALL.value,
+            Permission.UPDATE_ALL.value,
+            Permission.DELETE_ALL.value
+        ]
     )
     return access
