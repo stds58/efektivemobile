@@ -44,6 +44,26 @@ async def find_many_business_element(
     raise PermissionDenied(custom_detail=custom_detail)
 
 
+async def find_one_business_element(
+    business_element: BusinessDomain,
+    methodDAO: Callable[..., Awaitable[Any]],
+    access: AccessContext,
+    filters: BaseModel,
+    session: AsyncSession,
+):
+    if "read_all_permission" in access.permissions:
+        logger.info("read_all_permission", filters=filters)
+        return await methodDAO.find_one(filters=filters, session=session,)
+
+    if "read_permission" in access.permissions:
+        logger.info("read_permission", filters=filters)
+        return await methodDAO.find_one(filters=filters, session=session)
+
+    custom_detail = f"Missing read or read_all permission on {business_element.value}"
+    logger.error("PermissionDenied", error=custom_detail)
+    raise PermissionDenied(custom_detail=custom_detail)
+
+
 async def add_one_business_element(
     business_element: BusinessDomain,
     methodDAO: Callable[..., Awaitable[Any]],

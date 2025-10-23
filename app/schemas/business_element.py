@@ -1,10 +1,10 @@
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel
 
 
-class SchemaRoleBase(BaseModel):
+class SchemaBusinessElementBase(BaseModel):
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -12,5 +12,6 @@ class SchemaRoleBase(BaseModel):
     description: str
 
 
-class SchemaRoleFilter(BaseModel):
+class SchemaBusinessElementFilter(BaseModel):
+    id: Optional[UUID] = None
     name: Optional[str] = None

@@ -1,3 +1,4 @@
+from typing import Optional, List
 from uuid import UUID
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,9 +25,9 @@ logger = structlog.get_logger()
 async def find_many_user_role(
     business_element: BusinessDomain,
     access: AccessContext,
-    filters: SchemaUserRoleFilter,
     session: AsyncSession,
-    pagination: PaginationParams,
+    filters: Optional[SchemaUserRoleFilter] = None,
+    pagination: Optional[PaginationParams] = None,
 ):
     user_roles = await find_many_m2m(
         business_element=business_element,
@@ -44,7 +45,6 @@ async def find_one_user_role(
     access: AccessContext,
     filters: SchemaUserRoleFilter,
     session: AsyncSession,
-    pagination: PaginationParams,
 ):
     user_roles = await find_one_m2m(
         business_element=business_element,
@@ -52,7 +52,6 @@ async def find_one_user_role(
         access=access,
         filters=filters,
         session=session,
-        pagination=pagination,
     )
     return user_roles
 
@@ -85,3 +84,20 @@ async def delete_one_user_role(
         session=session,
         business_element_id=user_role_id,
     )
+
+
+async def get_list_user_rolenames(
+    access: AccessContext,
+    session: AsyncSession,
+    user_id: UUID,
+) -> List[str]:
+    filters=SchemaUserRoleFilter(id=user_id)
+    user_roles = await find_one_m2m(
+        business_element="user_roles",
+        methodDAO=UserRoleM2MDAO,
+        access=access,
+        filters=filters,
+        session=session,
+    )
+    role_names = [role.name for role in user_roles.roles or []]
+    return role_names

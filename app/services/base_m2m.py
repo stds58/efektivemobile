@@ -1,4 +1,4 @@
-from typing import Any, Awaitable, Callable, List, Tuple
+from typing import Any, Awaitable, Callable, List, Tuple, Optional
 from uuid import UUID
 import structlog
 from pydantic import BaseModel
@@ -23,9 +23,9 @@ async def find_many_m2m(
     business_element: BusinessDomain,
     methodDAO: Callable[..., Awaitable[Any]],
     access: AccessContext,
-    filters: BaseModel,
     session: AsyncSession,
-    pagination: PaginationParams,
+    filters: Optional[BaseModel] = None,
+    pagination: Optional[PaginationParams] = None,
 ):
     if "read_all_permission" in access.permissions:
         logger.info("read_all_permission", filters=filters, pagination=pagination)
@@ -46,9 +46,9 @@ async def find_one_m2m(
     business_element: BusinessDomain,
     methodDAO: Callable[..., Awaitable[Any]],
     access: AccessContext,
-    filters: BaseModel,
     session: AsyncSession,
-    pagination: PaginationParams,
+    filters: Optional[BaseModel] = None,
+    pagination: Optional[PaginationParams] = None,
 ):
     if "read_all_permission" in access.permissions:
         logger.info("read_all_permission", filters=filters, pagination=pagination)

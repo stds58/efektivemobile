@@ -26,17 +26,17 @@ class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):
 
     # _exclude_from_filter_by = {"id"}
 
-    @classmethod
-    async def get_with_roles(
-        cls, session: AsyncSession, user_id: UUID
-    ) -> Optional[User]:
-        query = (
-            select(cls.model)
-            .where(cls.model.id == user_id)
-            .options(selectinload(cls.model.roles))
-        )
-        result = await session.execute(query)
-        return result.scalar_one_or_none()
+    # @classmethod
+    # async def get_with_roles(
+    #     cls, session: AsyncSession, user_id: UUID
+    # ) -> Optional[User]:
+    #     query = (
+    #         select(cls.model)
+    #         .where(cls.model.id == user_id)
+    #         .options(selectinload(cls.model.roles))
+    #     )
+    #     result = await session.execute(query)
+    #     return result.scalar_one_or_none()
 
     @classmethod
     async def get_with_permissions(

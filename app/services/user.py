@@ -12,8 +12,6 @@ from app.crud.user import UserDAO, UserPasswordDAO
 from app.crud.user_role import UserRoleDAO
 from app.schemas.base import PaginationParams
 from app.schemas.role import SchemaRoleFilter
-from app.schemas.user import SchemaUserFilter
-from app.schemas.user_role import SchemaUserRoleFilter
 from app.schemas.permission import (
     AccessContext,
     SchemaUserRolesBase,
@@ -32,7 +30,7 @@ from app.schemas.user import (
 )
 from app.services.auth_service import AuthService
 from app.services.base_scoped_operations import find_many_scoped
-from app.services.user_role import find_one_user_role, find_many_user_role
+from app.services.user_role import find_one_user_role, find_many_user_role, get_list_user_rolenames
 from app.exceptions.base import (
     BadCredentialsError,
     EmailAlreadyRegisteredError,
@@ -241,24 +239,8 @@ async def authenticate_user(
     if not await AuthService.verify_password(user_in.password, hash_password):
         raise BadCredentialsError
 
-    filters = SchemaUserFilter(
-        id=user.id,
-        created_at=None,
-        updated_at=None,
-        email=None,
-        first_name=None,
-        last_name=None,
-        is_active=None,
-    )
-    user_roles = await find_one_user_role(
-        business_element="user_roles",
-        access=access,
-        filters=filters,
-        session=session,
-        pagination=PaginationParams(page=1, per_page=10),
-    )
+    role_names = await get_list_user_rolenames(access=access, session=session, user_id=user.id)
 
-    role_names = [role.name for role in user_roles.roles]
     access_token = AuthService.create_access_token(
         data={"sub": str(user.id), "role": role_names}
     )
