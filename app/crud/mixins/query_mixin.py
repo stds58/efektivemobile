@@ -37,12 +37,12 @@ class QueryMixin:
 
     @classmethod
     def _build_query(
-            cls,
-            query: Select,
-            filters: Optional[FilterSchemaType] = None,
-            pagination: Optional[PaginationParams] = None,
-            order_by: Optional[str] = None,
-            order: str = "asc",
+        cls,
+        query: Select,
+        filters: Optional[FilterSchemaType] = None,
+        pagination: Optional[PaginationParams] = None,
+        order_by: Optional[str] = None,
+        order: str = "asc",
     ) -> Select:
         if filters is not None:
             query = cls._apply_filters(query, filters)

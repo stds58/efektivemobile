@@ -20,9 +20,7 @@ def create_session_factory(database_url: str):
 
 
 @asynccontextmanager
-async def get_session_with_isolation(
-    session_factory, isolation_level: Optional[str]
-):
+async def get_session_with_isolation(session_factory, isolation_level: Optional[str]):
     try:
         async with session_factory() as session:
             # logger.info("Текущий уровень изоляции", isolation_level=isolation_level)

@@ -114,7 +114,9 @@ async def update_one_scoped(
 
     if "update_all_permission" in access.permissions:
         logger.info("update_all_permission")
-        result = await methodDAO.update_one(model_id=business_element_id, session=session, values=filters_dict)
+        result = await methodDAO.update_one(
+            model_id=business_element_id, session=session, values=filters_dict
+        )
         await session.commit()
         return result
     if "update_permission" in access.permissions:
@@ -124,7 +126,9 @@ async def update_one_scoped(
 
         if access.user_id == obj.user_id:
             logger.info("update_permission")
-            result = await methodDAO.update_one(model_id=business_element_id, session=session, values=filters_dict)
+            result = await methodDAO.update_one(
+                model_id=business_element_id, session=session, values=filters_dict
+            )
             await session.commit()
             return result
         logger.error("PermissionDenied", error=custom_detail)
@@ -146,7 +150,9 @@ async def delete_one_scoped(
     )
     if "delete_all_permission" in access.permissions:
         logger.info("delete_all_permission")
-        result = await methodDAO.delete_one_by_id(model_id=business_element_id, session=session)
+        result = await methodDAO.delete_one_by_id(
+            model_id=business_element_id, session=session
+        )
         await session.commit()
         return result
 
@@ -157,7 +163,9 @@ async def delete_one_scoped(
 
         if access.user_id == obj.user_id:
             logger.info("delete_permission")
-            result = await methodDAO.delete_one_by_id(model_id=business_element_id, session=session)
+            result = await methodDAO.delete_one_by_id(
+                model_id=business_element_id, session=session
+            )
             await session.commit()
             return result
         logger.error("PermissionDenied", error=custom_detail)

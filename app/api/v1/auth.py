@@ -55,8 +55,12 @@ async def login_for_access_token(
     tokens = await authenticate_user_api(user_in=form_data, session=session)
     logger.info("Logined user", user_id=user.id, filters=filters)
 
-    message_access = await set_access_token_in_cookie(response=response, access_token=tokens.access_token)
-    message_refresh = await set_refresh_token_in_cookie(response=response, refresh_token=tokens.refresh_token)
+    message_access = await set_access_token_in_cookie(
+        response=response, access_token=tokens.access_token
+    )
+    message_refresh = await set_refresh_token_in_cookie(
+        response=response, refresh_token=tokens.refresh_token
+    )
     message = [message_access, message_refresh]
     logger.info("Seted tokens in cookie", user_id=user.id)
     return message
@@ -106,10 +110,14 @@ async def refresh_token_endpoint(
     user_id = payload.sub
 
     logger.debug("Refresh access token", user_id=user_id)
-    access_token = await refresh_access_token(refresh_token=refresh_token, session=session)
+    access_token = await refresh_access_token(
+        refresh_token=refresh_token, session=session
+    )
     logger.info("Refreshed access token", user_id=user_id)
 
-    message = await set_access_token_in_cookie(response=response, access_token=access_token)
+    message = await set_access_token_in_cookie(
+        response=response, access_token=access_token
+    )
     logger.info("Seted access token in cookie", user_id=user_id)
 
     return message

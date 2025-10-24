@@ -1,6 +1,9 @@
 from app.crud.base import BaseDAO
 from app.models.business_element import BusinessElement
-from app.schemas.business_element import SchemaBusinessElementBase, SchemaBusinessElementFilter
+from app.schemas.business_element import (
+    SchemaBusinessElementBase,
+    SchemaBusinessElementFilter,
+)
 
 
 class BusinessElementDAO(BaseDAO[BusinessElement, None, SchemaBusinessElementFilter]):

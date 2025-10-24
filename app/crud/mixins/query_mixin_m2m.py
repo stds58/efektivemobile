@@ -39,8 +39,8 @@ class QueryMixin:
 
     @staticmethod
     def _aggregate_m2m_results(
-            rows: List[Tuple[Any, Any]],
-            target_attr_name: str,
+        rows: List[Tuple[Any, Any]],
+        target_attr_name: str,
     ) -> List[Any]:
         seen_sources = {}
         for source_obj, target_obj in rows:
@@ -52,11 +52,13 @@ class QueryMixin:
         return list(seen_sources.values())
 
     @classmethod
-    def _build_query(cls,
-            filters: Optional[FilterSchemaType] = None,
-            pagination: Optional[PaginationParams] = None,
-            order_by: Optional[str] = None,
-            order: str = "asc",) -> Select[Tuple[SourceModel, TargetModel]]:
+    def _build_query(
+        cls,
+        filters: Optional[FilterSchemaType] = None,
+        pagination: Optional[PaginationParams] = None,
+        order_by: Optional[str] = None,
+        order: str = "asc",
+    ) -> Select[Tuple[SourceModel, TargetModel]]:
         """
         Строит JOIN-запрос для M2M и возвращает query, а также найденные FK (если нужно).
         """
@@ -81,7 +83,8 @@ class QueryMixin:
                     target_fk = column
         if source_fk is None or target_fk is None:
             raise ValueError(
-                f"Не найдены foreign keys в {cls.through_model.__name__} к {cls.source_model.__name__} и {cls.target_model.__name__}")
+                f"Не найдены foreign keys в {cls.through_model.__name__} к {cls.source_model.__name__} и {cls.target_model.__name__}"
+            )
 
         query = (
             select(cls.source_model, cls.target_model)

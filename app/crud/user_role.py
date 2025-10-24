@@ -1,6 +1,10 @@
 from app.crud.base import BaseDAO
 from app.models.user_role import UserRole
-from app.schemas.user_role import SchemaUserRoleBase, SchemaUserRoleCreate, SchemaUserRoleFilter
+from app.schemas.user_role import (
+    SchemaUserRoleBase,
+    SchemaUserRoleCreate,
+    SchemaUserRoleFilter,
+)
 
 
 class UserRoleDAO(BaseDAO[UserRole, SchemaUserRoleCreate, SchemaUserRoleFilter]):

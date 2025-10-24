@@ -12,7 +12,6 @@ from app.dependencies.get_db import connection
 from app.core.stubs import FAKE_ACCESS_CONTEXT
 
 
-
 logger = structlog.get_logger()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/swaggerlogin")

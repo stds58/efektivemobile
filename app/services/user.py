@@ -33,7 +33,11 @@ from app.services.user_role import (
     get_user_with_roles,
     add_one_user_role,
 )
-from app.services.auth.tokens import create_access_token, create_refresh_token, decode_refresh_token
+from app.services.auth.tokens import (
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+)
 from app.services.auth.password import verify_password, get_password_hash
 from app.services.auth.blacklist import token_blacklist
 from app.services.base import (
@@ -72,9 +76,7 @@ async def find_many_user(
     )
 
 
-async def get_user_by_id(
-        access: AccessContext, user_id: UUID, session: AsyncSession
-):
+async def get_user_by_id(access: AccessContext, user_id: UUID, session: AsyncSession):
     filters = SchemaUserFilter(id=user_id)
     user = await find_one_business_element(
         business_element=BusinessDomain.USER,
@@ -131,9 +133,7 @@ async def user_change_password(
     if not await verify_password(filters.old_password, hash_old_password):
         raise BadCredentialsError
 
-    data = SchemaUserPasswordUpdate(
-        password=get_password_hash(filters.new_password)
-    )
+    data = SchemaUserPasswordUpdate(password=get_password_hash(filters.new_password))
     return await update_one_business_element(
         business_element=BusinessDomain.USER,
         methodDAO=UserDAO,
@@ -144,9 +144,7 @@ async def user_change_password(
     )
 
 
-async def soft_delete_user(
-    user_id: UUID, access: AccessContext, session: AsyncSession
-):
+async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncSession):
     filters = SchemaUserFilter(id=user_id, is_active=False)
     return await update_one_business_element(
         business_element=BusinessDomain.USER,
@@ -208,7 +206,7 @@ async def set_access_token_in_cookie(response: Response, access_token: AccessTok
         )
         return {
             "status": "success",
-            "access_expires_in": 60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            "access_expires_in": 60 * settings.ACCESS_TOKEN_EXPIRE_MINUTES,
         }
     except Exception:
         response.delete_cookie("access_token")
@@ -230,7 +228,7 @@ async def set_refresh_token_in_cookie(response: Response, refresh_token: Refresh
         )
         return {
             "status": "success",
-            "refresh_expires_in": 60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS
+            "refresh_expires_in": 60 * 60 * settings.REFRESH_TOKEN_EXPIRE_HOURS,
         }
     except Exception:
         response.delete_cookie("refresh_token")
@@ -244,7 +242,9 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
         logger.error("BadCredentialsError")
         raise BadCredentialsError
 
-    user = await get_user_by_id(access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session)
+    user = await get_user_by_id(
+        access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session
+    )
 
     if not user:
         logger.error("BadCredentialsError")
@@ -256,23 +256,25 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
     role_names = await get_list_user_rolenames(
         access=FAKE_ACCESS_CONTEXT, session=session, user_id=user.id
     )
-    new_access = create_access_token(
-        data={"sub": str(user.id), "role": role_names}
-    )
+    new_access = create_access_token(data={"sub": str(user.id), "role": role_names})
     new_refresh = create_refresh_token({"sub": str(user.id)})
 
     token_blacklist.ban(refresh_token)
     return Token(access_token=new_access, refresh_token=new_refresh)
 
 
-async def refresh_access_token(refresh_token: str, session: AsyncSession) -> AccessToken:
+async def refresh_access_token(
+    refresh_token: str, session: AsyncSession
+) -> AccessToken:
     payload = await decode_refresh_token(refresh_token)
     user_id = payload.sub
     if not user_id:
         logger.error("BadCredentialsError")
         raise BadCredentialsError
 
-    user = await get_user_by_id(access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session)
+    user = await get_user_by_id(
+        access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session
+    )
 
     if not user:
         logger.error("BadCredentialsError")
@@ -284,9 +286,7 @@ async def refresh_access_token(refresh_token: str, session: AsyncSession) -> Acc
     role_names = await get_list_user_rolenames(
         access=FAKE_ACCESS_CONTEXT, session=session, user_id=user.id
     )
-    new_access = create_access_token(
-        data={"sub": str(user.id), "role": role_names}
-    )
+    new_access = create_access_token(data={"sub": str(user.id), "role": role_names})
     access_token = new_access
     return access_token
 
@@ -296,7 +296,10 @@ async def add_role_to_user(
 ) -> SchemaUserRolesBase:
     if "create_permission" in access.permissions:
         return await add_one_user_role(
-            business_element=BusinessDomain.USER, access=access, data=data, session=session
+            business_element=BusinessDomain.USER,
+            access=access,
+            data=data,
+            session=session,
         )
     logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing create_permission on user_roles")
@@ -351,7 +354,9 @@ async def get_all_user_roles(
 
 
 async def ensure_user_is_active(user_id: UUID, session: AsyncSession) -> bool:
-    user = await get_user_by_id(access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session)
+    user = await get_user_by_id(
+        access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session
+    )
     if user is None:
         raise BadCredentialsError
     if not user.is_active:

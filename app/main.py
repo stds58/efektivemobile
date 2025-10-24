@@ -16,11 +16,14 @@ from app.core.structlog_configure import configure_logging
 from contextlib import asynccontextmanager
 from app.utils.importer_data import seed_all
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if settings.ENVIRONMENT == "development":
         await seed_all()
     yield
+
+
 ############################################
 
 # Подавляем логи Uvicorn (оставляем только ошибки или полностью отключаем)
@@ -35,7 +38,7 @@ logger = structlog.get_logger()
 
 app = FastAPI(
     debug=settings.DEBUG,
-#lifespan=lifespan,
+    # lifespan=lifespan,
     title="API",
     version="0.1.0",
     docs_url="/api/docs",

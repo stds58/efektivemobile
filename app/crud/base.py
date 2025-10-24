@@ -41,7 +41,7 @@ class BaseDAO(QueryMixin, Generic[ModelType, CreateSchemaType, FilterSchemaType]
     @classmethod
     async def find_one(
         cls, session: AsyncSession, filters: Optional[FilterSchemaType] = None
-    ) -> Optional[PydanticModel]: # -> Optional[PydanticModel]
+    ) -> Optional[PydanticModel]:  # -> Optional[PydanticModel]
         query = select(cls.model)
         query = cls._build_query(query, filters)
         result = await session.execute(query)

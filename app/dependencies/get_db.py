@@ -58,7 +58,7 @@ def auth_db_context(
         async with get_session_with_isolation(
             async_session_maker, isolation_level
         ) as session:
-            session_id_obj = (await session.execute(text("SELECT pg_backend_pid()")))
+            session_id_obj = await session.execute(text("SELECT pg_backend_pid()"))
             session_id = session_id_obj.scalar_one()
             transaction_id_obj = await session.execute(text("SELECT txid_current()"))
             transaction_id = transaction_id_obj.scalar()
@@ -74,7 +74,7 @@ def auth_db_context(
                     else None,
                     isolation_level=isolation_level,
                     session_id=session_id,
-                    transaction_id=transaction_id
+                    transaction_id=transaction_id,
                 )
 
                 logger.info(

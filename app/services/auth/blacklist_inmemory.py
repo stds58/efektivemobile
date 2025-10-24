@@ -8,12 +8,10 @@ TTL = (settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60) + 60
 
 class TokenBlacklist(ABC):
     @abstractmethod
-    async def ban(self, token: str) -> None:
-        ...
+    async def ban(self, token: str) -> None: ...
 
     @abstractmethod
-    async def is_banned(self, token: str) -> bool:
-        ...
+    async def is_banned(self, token: str) -> bool: ...
 
 
 class InMemoryTokenBlacklist(TokenBlacklist):

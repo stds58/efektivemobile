@@ -87,7 +87,9 @@ async def add_one_file_upload(
         with open(file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
     except OSError as e:
-        raise FileStorageError(custom_detail=f"Ошибка сохранения файла: {str(e)}") from e
+        raise FileStorageError(
+            custom_detail=f"Ошибка сохранения файла: {str(e)}"
+        ) from e
     return file_upload
 
 

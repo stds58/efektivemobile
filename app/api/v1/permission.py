@@ -41,7 +41,7 @@ async def get_users(
 
 @router.post("", summary="Add role", response_model=SchemaUserBase)
 async def edit_user(
-   request_context: RequestContext = private_route_dependency(
+    request_context: RequestContext = private_route_dependency(
         business_element=BusinessDomain.USER_ROLES,
         isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
@@ -50,27 +50,33 @@ async def edit_user(
     updated_user = await add_role_to_user(
         access=request_context.access, session=request_context.session, data=data
     )
-    filters = SchemaUserRolesFilter(user_id=updated_user.user_id, role_id=updated_user.role_id)
+    filters = SchemaUserRolesFilter(
+        user_id=updated_user.user_id, role_id=updated_user.role_id
+    )
     return await get_all_user_roles(
         filters=filters, access=request_context.access, session=request_context.session
     )
 
 
-@router.delete("/{user_id}/{role_id}", summary="Remove role from user", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{user_id}/{role_id}",
+    summary="Remove role from user",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def remove_role(
-    user_id:UUID,
-    role_id:UUID,
+    user_id: UUID,
+    role_id: UUID,
     request_context: RequestContext = private_route_dependency(
         business_element=BusinessDomain.USER_ROLES,
         isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
-    filters=SchemaUserRoleFilter(user_id=user_id, role_id=role_id)
+    filters = SchemaUserRoleFilter(user_id=user_id, role_id=role_id)
     user_role = await find_one_user_role(
         business_element=BusinessDomain.USER_ROLES,
         access=request_context.access,
         filters=filters,
-        session=request_context.session
+        session=request_context.session,
     )
     if user_role is None:
         raise ObjectsNotFoundByIDError

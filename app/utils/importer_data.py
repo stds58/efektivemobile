@@ -1,7 +1,16 @@
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import Role, BusinessElement, AccessRule, User, Category, Product, Order, UserRole
+from app.models import (
+    Role,
+    BusinessElement,
+    AccessRule,
+    User,
+    Category,
+    Product,
+    Order,
+    UserRole,
+)
 from app.utils.sample_data import (
     BUSINESS_ELEMENTS_DATA,
     ROLES_DATA,
@@ -135,9 +144,12 @@ async def seed_role_user(session: AsyncSession):
 
             # Добавляем новую связь
             session.add(UserRole(user_id=user_id, role_id=role_id))
-            existing_pairs.add((user_id, role_id))  # чтобы не дублировать в рамках одного запуска
+            existing_pairs.add(
+                (user_id, role_id)
+            )  # чтобы не дублировать в рамках одного запуска
 
     await session.commit()
+
 
 async def seed_categories(session: AsyncSession):
     existing_names = {

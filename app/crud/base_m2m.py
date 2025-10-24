@@ -11,14 +11,24 @@ stmt = (
     .outerjoin(Role, UserRole.role_id == Role.id)
 )
 """
+
 from typing import ClassVar, Generic, Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.base import PaginationParams
-from app.crud.mixins.types import SourceModel, ThroughModel, TargetModel, SourceSchema, FilterSchemaType
+from app.crud.mixins.types import (
+    SourceModel,
+    ThroughModel,
+    TargetModel,
+    SourceSchema,
+    FilterSchemaType,
+)
 from app.crud.mixins.query_mixin_m2m import QueryMixin
 
 
-class M2MDAO(QueryMixin, Generic[SourceModel, ThroughModel, TargetModel, SourceSchema, FilterSchemaType]):
+class M2MDAO(
+    QueryMixin,
+    Generic[SourceModel, ThroughModel, TargetModel, SourceSchema, FilterSchemaType],
+):
     source_model: ClassVar[type[SourceModel]]
     through_model: ClassVar[type[ThroughModel]]
     target_model: ClassVar[type[TargetModel]]
@@ -47,13 +57,13 @@ class M2MDAO(QueryMixin, Generic[SourceModel, ThroughModel, TargetModel, SourceS
 
     @classmethod
     async def find_one(
-            cls,
-            session: AsyncSession,
-            filters: Optional[FilterSchemaType] = None
+        cls, session: AsyncSession, filters: Optional[FilterSchemaType] = None
     ) -> SourceSchema:
         query = cls._build_query(filters)
         result = await session.execute(query)
         rows = result.all()
         aggregated_sources = cls._aggregate_m2m_results(rows, cls.target_attr_name)
 
-        return cls.source_schema.model_validate(aggregated_sources[0], from_attributes=True)
+        return cls.source_schema.model_validate(
+            aggregated_sources[0], from_attributes=True
+        )

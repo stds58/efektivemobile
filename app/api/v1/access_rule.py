@@ -39,14 +39,18 @@ async def get_access_rules(
     return access_rule
 
 
-@router.patch("/{access_rule_id}", summary="Update access_rule", response_model=SchemaAccessRuleBase)
+@router.patch(
+    "/{access_rule_id}",
+    summary="Update access_rule",
+    response_model=SchemaAccessRuleBase,
+)
 async def edit_access_rule(
     access_rule_id: UUID,
     data: SchemaAccessRulePatch,
-        request_context: RequestContext = private_route_dependency(
-            business_element=BusinessDomain.ACCESS_RULES,
-            isolation_level=IsolationLevel.REPEATABLE_READ,
-        ),
+    request_context: RequestContext = private_route_dependency(
+        business_element=BusinessDomain.ACCESS_RULES,
+        isolation_level=IsolationLevel.REPEATABLE_READ,
+    ),
 ):
     logger.info("Update access_rule", data=data, model_id=access_rule_id)
     updated_product = await update_one_access_rule(

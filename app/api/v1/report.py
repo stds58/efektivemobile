@@ -10,7 +10,6 @@ from app.services.report import get_report
 from app.schemas.permission import RequestContext
 
 
-
 logger = structlog.get_logger()
 
 V2_DIR = Path(__file__).resolve().parent

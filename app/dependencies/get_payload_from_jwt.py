@@ -56,7 +56,7 @@ async def get_payload_from_jwt(
             access=FAKE_ACCESS_CONTEXT,
             session=session,
             role_id=role_id,
-            search_businesselement=business_element
+            search_businesselement=business_element,
         )
         all_items.update(rule)
     list_permissions = list(all_items)

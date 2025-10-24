@@ -3,8 +3,18 @@ from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
-from app.schemas.user import SchemaUserPatch, SchemaUserFilter, SchemaUserBase, SchemaChangePasswordRequest
-from app.services.user import find_many_user, update_user, soft_delete_user, user_change_password #, get_user_by_id
+from app.schemas.user import (
+    SchemaUserPatch,
+    SchemaUserFilter,
+    SchemaUserBase,
+    SchemaChangePasswordRequest,
+)
+from app.services.user import (
+    find_many_user,
+    update_user,
+    soft_delete_user,
+    user_change_password,
+)  # , get_user_by_id
 from app.dependencies.private_router import private_route_dependency
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
@@ -27,7 +37,7 @@ async def get_me(
         isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
-    filters=SchemaUserRoleFilter(user_id=request_context.access.user_id)
+    filters = SchemaUserRoleFilter(user_id=request_context.access.user_id)
     user = await find_one_user_role_m2m(
         business_element=BusinessDomain.USER_ROLES,
         access=request_context.access,
@@ -39,7 +49,7 @@ async def get_me(
     return user
 
 
-@router.patch("/me", summary="Сhange_password", status_code=status.HTTP_204_NO_CONTENT )
+@router.patch("/me", summary="Сhange_password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(
     filters: SchemaChangePasswordRequest,
     request_context: RequestContext = private_route_dependency(
@@ -52,10 +62,11 @@ async def change_password(
         access=request_context.access,
         filters=filters,
         session=request_context.session,
-        user_id=request_context.access.user_id
+        user_id=request_context.access.user_id,
     )
     logger.info("Сhanged_password")
     return
+
 
 @router.get("", summary="Get users", response_model=List[SchemaUserBase])
 async def get_users(
@@ -87,7 +98,10 @@ async def edit_user(
     ),
 ):
     updated_user = await update_user(
-        access=request_context.access, filters=user_in, session=request_context.session, user_id=user_id
+        access=request_context.access,
+        filters=user_in,
+        session=request_context.session,
+        user_id=user_id,
     )
     return updated_user
 
@@ -111,5 +125,7 @@ async def unactivate_user(
     впрочем, в зависимости get_current_user есть проверка на user.is_active в бд.
     она заменяет белый список токенов
     """
-    await soft_delete_user(access=request_context.access, session=request_context.session, user_id=user_id)
+    await soft_delete_user(
+        access=request_context.access, session=request_context.session, user_id=user_id
+    )
     return

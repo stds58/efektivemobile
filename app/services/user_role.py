@@ -70,6 +70,7 @@ async def find_one_user_role(
     )
     return user_roles
 
+
 async def add_one_user_role(
     business_element: BusinessDomain,
     access: AccessContext,
@@ -105,7 +106,7 @@ async def get_list_user_rolenames(
     session: AsyncSession,
     user_id: UUID,
 ) -> List[str]:
-    filters=SchemaUserRoleFilter(id=user_id)
+    filters = SchemaUserRoleFilter(id=user_id)
     user_roles = await find_one_m2m(
         business_element="user_roles",
         methodDAO=UserRoleM2MDAO,
@@ -122,7 +123,7 @@ async def get_user_with_roles(
     session: AsyncSession,
     user_id: UUID,
 ) -> SchemaUserBase:
-    filters=SchemaUserRoleFilter(id=user_id)
+    filters = SchemaUserRoleFilter(id=user_id)
     user_with_roles = await find_one_m2m(
         business_element="user_roles",
         methodDAO=UserRoleM2MDAO,

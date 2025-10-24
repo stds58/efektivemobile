@@ -8,7 +8,7 @@ from app.exceptions.base import (
     BlacklistedError,
     TokenExpiredError,
     BadCredentialsError,
-    InvalidTokenError
+    InvalidTokenError,
 )
 from app.services.auth.blacklist import token_blacklist
 from app.schemas.token import AccessToken, RefreshToken

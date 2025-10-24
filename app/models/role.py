@@ -8,9 +8,7 @@ class Role(Base):
     description: Mapped[StrNullFalse]
 
     user_roles: Mapped[List["UserRole"]] = relationship(
-        "UserRole",
-        back_populates="roles",
-        lazy="selectin"
+        "UserRole", back_populates="roles", lazy="selectin"
     )
 
     access_rules: Mapped[List["AccessRule"]] = relationship(

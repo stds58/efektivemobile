@@ -46,7 +46,10 @@ async def find_one_business_element(
 ):
     if Permission.READ_ALL in access.permissions:
         logger.info(Permission.READ_ALL.value, filters=filters)
-        return await methodDAO.find_one(filters=filters, session=session,)
+        return await methodDAO.find_one(
+            filters=filters,
+            session=session,
+        )
 
     if Permission.READ in access.permissions:
         logger.info(Permission.READ.value, filters=filters)
@@ -86,19 +89,27 @@ async def update_one_business_element(
 ):
     filters_dict = data.model_dump(exclude_unset=True)
     if Permission.UPDATE_ALL in access.permissions:
-        logger.info(Permission.UPDATE_ALL.value, model_id=business_element_id, filters=filters_dict)
-        result = await methodDAO.update_one(model_id=business_element_id, session=session, values=filters_dict)
+        logger.info(
+            Permission.UPDATE_ALL.value,
+            model_id=business_element_id,
+            filters=filters_dict,
+        )
+        result = await methodDAO.update_one(
+            model_id=business_element_id, session=session, values=filters_dict
+        )
         await session.commit()
         return result
     if Permission.UPDATE in access.permissions:
-        logger.info(Permission.UPDATE.value, model_id=business_element_id, filters=filters_dict)
-        result = await methodDAO.update_one(model_id=business_element_id, session=session, values=filters_dict)
+        logger.info(
+            Permission.UPDATE.value, model_id=business_element_id, filters=filters_dict
+        )
+        result = await methodDAO.update_one(
+            model_id=business_element_id, session=session, values=filters_dict
+        )
         await session.commit()
         return result
 
-    custom_detail = (
-        f"Missing {Permission.UPDATE.value} or {Permission.UPDATE_ALL.value} on {business_element.value}"
-    )
+    custom_detail = f"Missing {Permission.UPDATE.value} or {Permission.UPDATE_ALL.value} on {business_element.value}"
     logger.error("PermissionDenied", error=custom_detail)
     raise PermissionDenied(custom_detail=custom_detail)
 
@@ -112,17 +123,19 @@ async def delete_one_business_element(
 ):
     if Permission.DELETE_ALL in access.permissions:
         logger.info(Permission.DELETE_ALL.value, model_id=business_element_id)
-        result = await methodDAO.delete_one_by_id(model_id=business_element_id, session=session)
+        result = await methodDAO.delete_one_by_id(
+            model_id=business_element_id, session=session
+        )
         await session.commit()
         return result
     if Permission.DELETE in access.permissions:
         logger.info(Permission.DELETE.value, model_id=business_element_id)
-        result = await methodDAO.delete_one_by_id(model_id=business_element_id, session=session)
+        result = await methodDAO.delete_one_by_id(
+            model_id=business_element_id, session=session
+        )
         await session.commit()
         return result
 
-    custom_detail = (
-        f"Missing {Permission.DELETE.value} or {Permission.DELETE_ALL.value} on {business_element.value}"
-    )
+    custom_detail = f"Missing {Permission.DELETE.value} or {Permission.DELETE_ALL.value} on {business_element.value}"
     logger.error("PermissionDenied", error=custom_detail)
     raise PermissionDenied(custom_detail=custom_detail)

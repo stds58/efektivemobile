@@ -24,7 +24,9 @@ async def authenticate_user(
     user_in: SchemaUserLoginMain, session: AsyncSession
 ) -> Token:
     login = user_in.email if user_in.username is None else user_in.username
-    user = await get_user_by_email(access=FAKE_ACCESS_CONTEXT, email=login, session=session)
+    user = await get_user_by_email(
+        access=FAKE_ACCESS_CONTEXT, email=login, session=session
+    )
 
     if not user:
         logger.error("в БД отсутствует user_id", user_id=user.id)
@@ -39,11 +41,11 @@ async def authenticate_user(
         # +1 попытка в список
         raise BadCredentialsError
 
-    role_names = await get_list_user_rolenames(access=FAKE_ACCESS_CONTEXT, session=session, user_id=user.id)
-
-    access_token = create_access_token(
-        data={"sub": str(user.id), "role": role_names}
+    role_names = await get_list_user_rolenames(
+        access=FAKE_ACCESS_CONTEXT, session=session, user_id=user.id
     )
+
+    access_token = create_access_token(data={"sub": str(user.id), "role": role_names})
     refresh_token = create_refresh_token({"sub": str(user.id)})
 
     return Token(access_token=access_token, refresh_token=refresh_token)

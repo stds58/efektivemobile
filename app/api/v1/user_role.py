@@ -34,7 +34,10 @@ async def get_user_roles(
     pagination: PaginationParams = Depends(),
 ):
     logger.info(
-        "Get user_roles", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+        "Get user_roles",
+        owner_field=OWNER_FIELD,
+        filters=filters,
+        pagination=pagination,
     )
     user_role = await find_many_user_role_m2m(
         business_element=BusinessDomain.USER_ROLES,
@@ -44,7 +47,10 @@ async def get_user_roles(
         pagination=pagination,
     )
     logger.info(
-        "Geted user_roles", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
+        "Geted user_roles",
+        owner_field=OWNER_FIELD,
+        filters=filters,
+        pagination=pagination,
     )
     return user_role
 
@@ -69,7 +75,9 @@ async def create_user_role(
 
 
 @router.delete(
-    "/{user_role_id}", summary="Delete user_role", status_code=status.HTTP_204_NO_CONTENT
+    "/{user_role_id}",
+    summary="Delete user_role",
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_user_role(
     user_role_id: UUID,
