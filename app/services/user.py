@@ -10,9 +10,9 @@ from app.core.stubs import FAKE_ACCESS_CONTEXT
 from app.models import User
 from app.crud.role import RoleDAO
 from app.crud.user import UserDAO, UserPasswordDAO
-from app.crud.user_role import UserRoleDAO
 from app.schemas.base import PaginationParams
 from app.schemas.role import SchemaRoleFilter
+from app.schemas.user import SchemaUserBase
 from app.schemas.permission import (
     AccessContext,
     SchemaUserRolesBase,
@@ -24,24 +24,21 @@ from app.schemas.user import (
     SchemaUserCreate,
     SchemaUserPatch,
     SchemaUserFilter,
-    SchemaUserLogin,
-    SchemaUserSwaggerLogin,
-    SchemaUserLoginMain,
     UserHashPassword,
     SchemaChangePasswordRequest,
     SchemaUserPasswordUpdate,
 )
 from app.services.base_scoped_operations import find_many_scoped
-from app.services.user_role import find_one_user_role, find_many_user_role, get_list_user_rolenames
+from app.services.user_role import (
+    get_user_with_roles,
+    add_one_user_role,
+)
 from app.services.auth.tokens import create_access_token, create_refresh_token, decode_refresh_token
 from app.services.auth.password import verify_password, get_password_hash
 from app.services.auth.blacklist import token_blacklist
 from app.services.base import (
     find_one_business_element,
-    find_many_business_element,
-    add_one_business_element,
     update_one_business_element,
-    delete_one_business_element,
 )
 from app.exceptions.base import (
     BadCredentialsError,
@@ -77,7 +74,7 @@ async def find_many_user(
 
 async def get_user_by_id(
         access: AccessContext, user_id: UUID, session: AsyncSession
-) -> Optional[User]:
+):
     filters = SchemaUserFilter(id=user_id)
     user = await find_one_business_element(
         business_element=BusinessDomain.USER,
@@ -240,9 +237,6 @@ async def set_refresh_token_in_cookie(response: Response, refresh_token: Refresh
         raise InvalidTokenError
 
 
-
-
-
 async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Token:
     payload = await decode_refresh_token(refresh_token)
     user_id = payload.sub
@@ -301,8 +295,8 @@ async def add_role_to_user(
     data: SchemaUserRolesCreate, access: AccessContext, session: AsyncSession
 ) -> SchemaUserRolesBase:
     if "create_permission" in access.permissions:
-        return await UserDAO.add_role_to_user(
-            session=session, user_id=data.user_id, role_id=data.role_id
+        return await add_one_user_role(
+            business_element=BusinessDomain.USER, access=access, data=data, session=session
         )
     logger.error("PermissionDenied")
     raise PermissionDenied(custom_detail="Missing create_permission on user_roles")
@@ -334,10 +328,11 @@ async def remove_role_from_user(
 
 async def get_all_user_roles(
     filters: SchemaUserRolesFilter, access: AccessContext, session: AsyncSession
-) -> List[dict]:
+) -> SchemaUserBase:
     if "read_all_permission" in access.permissions:
-
-        return await UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
+        return await get_user_with_roles(
+            access=access, session=session, user_id=access.user_id
+        )
 
     if "read_permission" in access.permissions:
         if filters.user_id is not None and filters.user_id != access.user_id:
@@ -345,11 +340,9 @@ async def get_all_user_roles(
             raise PermissionDenied(
                 custom_detail="Missing read or read_all permission on user_roles"
             )
-        #filters.user_id = access.user_id
-        return await get_list_user_rolenames(
-            access=FAKE_ACCESS_CONTEXT, session=session, user_id=access.user_id
+        return await get_user_with_roles(
+            access=access, session=session, user_id=access.user_id
         )
-        #return UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
 
     logger.error("PermissionDenied")
     raise PermissionDenied(

@@ -8,6 +8,10 @@ from app.services.user import find_many_user, update_user, soft_delete_user, get
 from app.dependencies.private_router import private_route_dependency
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
+from app.services.user_role import find_one_user_role_m2m
+from app.schemas.user_role import (
+    SchemaUserRoleFilter,
+)
 
 
 logger = structlog.get_logger()
@@ -23,16 +27,19 @@ async def get_me(
         isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
-    user = await get_user_by_id(
-        user_id = request_context.access.user_id,
-        session=request_context.session,
+    filters=SchemaUserRoleFilter(user_id=request_context.access.user_id)
+    user = await find_one_user_role_m2m(
+        business_element=BusinessDomain.USER_ROLES,
         access=request_context.access,
+        filters=filters,
+        session=request_context.session,
     )
+
     logger.info("Get user me")
     return user
 
 
-@router.patch("/me", summary="Сhange_password" )
+@router.patch("/me", summary="Сhange_password", status_code=status.HTTP_204_NO_CONTENT )
 async def change_password(
     filters: SchemaChangePasswordRequest,
     request_context: RequestContext = private_route_dependency(
@@ -48,7 +55,7 @@ async def change_password(
         user_id=request_context.access.user_id
     )
     logger.info("Сhanged_password")
-    return updated_user
+    return
 
 @router.get("", summary="Get users", response_model=List[SchemaUserBase])
 async def get_users(
@@ -95,5 +102,14 @@ async def unactivate_user(
         isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
+    """
+    soft-delete не отзывает активные токены
+    если админ будет отключать другого пользователя, то токены можно взять из белого списка токенов,
+    а в данной системе есть только чёрный список.
+    да и требования к системе не такие жёсткие - не страшно, если новость об отключении дойдёт до пользователя,
+    когда он попытается взять новый токен.
+    впрочем, в зависимости get_current_user есть проверка на user.is_active в бд.
+    она заменяет белый список токенов
+    """
     await soft_delete_user(access=request_context.access, session=request_context.session, user_id=user_id)
     return

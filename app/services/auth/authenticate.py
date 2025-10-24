@@ -16,7 +16,7 @@ from app.schemas.user import (
     SchemaUserLoginMain,
     UserHashPassword,
 )
-from app.services.user_role import find_one_user_role, find_many_user_role, get_list_user_rolenames
+from app.services.user_role import find_one_user_role_m2m, find_many_user_role_m2m, get_list_user_rolenames
 from app.services.auth.tokens import create_access_token, create_refresh_token, decode_refresh_token
 from app.services.auth.password import verify_password, get_password_hash
 from app.exceptions.base import (

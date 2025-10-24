@@ -1,5 +1,4 @@
-from typing import Any, Awaitable, Callable, List, Tuple, Optional
-from uuid import UUID
+from typing import Any, Awaitable, Callable, Optional
 import structlog
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession

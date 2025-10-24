@@ -8,7 +8,7 @@ from app.services.auth.tokens import decode_access_token
 from app.services.user import ensure_user_is_active
 from app.schemas.permission import AccessContext
 from app.schemas.user import SchemaUserFilter
-from app.services.user_role import find_one_user_role, find_many_user_role
+from app.services.user_role import find_one_user_role_m2m, find_many_user_role_m2m
 from app.services.access_rule import get_user_access_rules_for_business_element
 
 
@@ -41,7 +41,7 @@ async def get_payload_from_jwt(
     user_id = await get_user_id_from_jwt(token=token, session=session)
 
     filters = SchemaUserFilter(id=user_id)
-    user_roles = await find_one_user_role(
+    user_roles = await find_one_user_role_m2m(
         business_element="user_roles",
         access=FAKE_ACCESS_CONTEXT,
         filters=filters,

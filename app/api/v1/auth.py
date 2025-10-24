@@ -1,14 +1,11 @@
 from typing import List
-from uuid import uuid4
 import structlog
 from fastapi import APIRouter, Depends, status, Cookie, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.permission import AccessContext
 from app.schemas.user import SchemaUserCreate, SchemaUserLogin, UserPublic
 from app.services.user import (
     create_user,
     refresh_access_token,
-    #refresh_user_tokens,
     set_access_token_in_cookie,
     set_refresh_token_in_cookie,
     get_user_by_email,

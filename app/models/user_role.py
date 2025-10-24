@@ -1,12 +1,14 @@
 from uuid import UUID
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
 
 class UserRole(Base):
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
-    role_id: Mapped[UUID] = mapped_column(ForeignKey("role.id"), primary_key=True)
+    __table_args__ = (UniqueConstraint("user_id", "role_id", name="uq_user_role"),)
+
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    role_id: Mapped[UUID] = mapped_column(ForeignKey("role.id"))
 
     users: Mapped["User"] = relationship("User", back_populates="user_roles")
     roles: Mapped["Role"] = relationship("Role", back_populates="user_roles")

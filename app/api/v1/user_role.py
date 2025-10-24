@@ -9,7 +9,7 @@ from app.schemas.user_role import (
     SchemaUserRoleFilter,
 )
 from app.services.user_role import (
-    find_many_user_role,
+    find_many_user_role_m2m,
     add_one_user_role,
     delete_one_user_role,
 )
@@ -26,7 +26,7 @@ OWNER_FIELD = "user_id"
 
 
 @router.get("", summary="Get user_roles")
-async def get_orders(
+async def get_user_roles(
     request_context: RequestContext = private_route_dependency(
         business_element=BusinessDomain.USER_ROLES,
         isolation_level=IsolationLevel.REPEATABLE_READ,
@@ -37,7 +37,7 @@ async def get_orders(
     logger.info(
         "Get user_roles", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
     )
-    order = await find_many_user_role(
+    user_role = await find_many_user_role_m2m(
         business_element=BusinessDomain.USER_ROLES,
         access=request_context.access,
         filters=filters,
@@ -47,11 +47,11 @@ async def get_orders(
     logger.info(
         "Geted user_roles", owner_field=OWNER_FIELD, filters=filters, pagination=pagination
     )
-    return order
+    return user_role
 
 
 @router.post("", summary="Create user_role")
-async def create_order(
+async def create_user_role(
     data: SchemaUserRoleCreate,
     request_context: RequestContext = private_route_dependency(
         business_element=BusinessDomain.USER_ROLES,
@@ -59,20 +59,20 @@ async def create_order(
     ),
 ):
     logger.info("Add user_role", data=data)
-    order = await add_one_user_role(
+    user_role = await add_one_user_role(
         business_element=BusinessDomain.USER_ROLES,
         access=request_context.access,
         data=data,
         session=request_context.session,
     )
     logger.info("Added user_role", data=data)
-    return order
+    return user_role
 
 
 @router.delete(
     "/{user_role_id}", summary="Delete user_role", status_code=status.HTTP_204_NO_CONTENT
 )
-async def delete_product(
+async def delete_user_role(
     user_role_id: UUID,
     request_context: RequestContext = private_route_dependency(
         business_element=BusinessDomain.USER_ROLES,
