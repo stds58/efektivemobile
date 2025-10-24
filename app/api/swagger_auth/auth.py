@@ -7,9 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.permission import AccessContext
 from app.schemas.token import Token
 from app.schemas.user import SchemaUserLogin
-from app.services.auth_service import AuthService
-from app.services.user import authenticate_user_swagger, get_user_by_email
+from app.services.auth.blacklist import token_blacklist
+from app.services.user import get_user_by_email
+from app.services.auth.authenticate import authenticate_user_swagger
 from app.dependencies.get_db import connection
+from app.core.stubs import FAKE_ACCESS_CONTEXT
+
 
 
 logger = structlog.get_logger()
@@ -25,10 +28,8 @@ async def swaggerlogin_for_access_token(
     session: AsyncSession = Depends(connection(isolation_level="READ COMMITTED")),
 ) -> Token:
     filters = SchemaUserLogin(email=form_data.username, password="*****")
-    fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
     user = await get_user_by_email(
-        access=access, email=form_data.username, session=session
+        access=FAKE_ACCESS_CONTEXT, email=form_data.username, session=session
     )
 
     logger.info("Login swagger user", user_id=user.id, filters=filters)
@@ -40,5 +41,5 @@ async def swaggerlogin_for_access_token(
 
 @swagger_router.post("/logout")
 async def logout(token: str = Depends(oauth2_scheme)) -> dict:
-    AuthService.ban_token(token)
+    token_blacklist.ban(token)
     return {"message": "You have been logged out"}

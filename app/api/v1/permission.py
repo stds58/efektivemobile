@@ -24,7 +24,7 @@ router = APIRouter()
 OWNER_FIELD = "user_id"
 
 
-@router.get("", response_model=List[dict], summary="Get roles")
+@router.get("", summary="Get roles") # response_model=List[dict],
 async def get_users(
     request_context: RequestContext = private_route_dependency(
         business_element=BusinessDomain.USER_ROLES,

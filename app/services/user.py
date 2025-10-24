@@ -1,13 +1,14 @@
 from typing import Optional, List
-from uuid import UUID, uuid4
+from uuid import UUID
+from secrets import compare_digest
 import structlog
 from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.enums import BusinessDomain
-from app.core.security import get_password_hash
-from app.crud.role import RoleDAO
+from app.core.stubs import FAKE_ACCESS_CONTEXT
 from app.models import User
+from app.crud.role import RoleDAO
 from app.crud.user import UserDAO, UserPasswordDAO
 from app.crud.user_role import UserRoleDAO
 from app.schemas.base import PaginationParams
@@ -27,10 +28,21 @@ from app.schemas.user import (
     SchemaUserSwaggerLogin,
     SchemaUserLoginMain,
     UserHashPassword,
+    SchemaChangePasswordRequest,
+    SchemaUserPasswordUpdate,
 )
-from app.services.auth_service import AuthService
 from app.services.base_scoped_operations import find_many_scoped
 from app.services.user_role import find_one_user_role, find_many_user_role, get_list_user_rolenames
+from app.services.auth.tokens import create_access_token, create_refresh_token, decode_refresh_token
+from app.services.auth.password import verify_password, get_password_hash
+from app.services.auth.blacklist import token_blacklist
+from app.services.base import (
+    find_one_business_element,
+    find_many_business_element,
+    add_one_business_element,
+    update_one_business_element,
+    delete_one_business_element,
+)
 from app.exceptions.base import (
     BadCredentialsError,
     EmailAlreadyRegisteredError,
@@ -39,6 +51,7 @@ from app.exceptions.base import (
     PermissionDenied,
     InvalidTokenError,
 )
+from app.services.user_role import get_list_user_rolenames
 
 
 logger = structlog.get_logger()
@@ -63,29 +76,31 @@ async def find_many_user(
 
 
 async def get_user_by_id(
-    access: AccessContext, user_id: UUID, session: AsyncSession
+        access: AccessContext, user_id: UUID, session: AsyncSession
 ) -> Optional[User]:
-    filter_obj = SchemaUserFilter(id=user_id)
-    user = await UserDAO.find_one(filters=filter_obj, session=session)
-    if "read_all_permission" in access.permissions:
-        return user
-    if "read_permission" in access.permissions and user_id == access.user_id:
-        return user
-    logger.error("PermissionDenied")
-    raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
+    filters = SchemaUserFilter(id=user_id)
+    user = await find_one_business_element(
+        business_element=BusinessDomain.USER,
+        methodDAO=UserDAO,
+        access=access,
+        filters=filters,
+        session=session,
+    )
+    return user
 
 
 async def get_user_by_email(
     access: AccessContext, email: str, session: AsyncSession
 ) -> Optional[User]:
-    filter_obj = SchemaUserFilter(email=email)
-    user = await UserDAO.find_one(filters=filter_obj, session=session)
-    if "read_all_permission" in access.permissions:
-        return user
-    if "read_permission" in access.permissions and user.id == access.user_id:
-        return user
-    logger.error("PermissionDenied")
-    raise PermissionDenied(custom_detail="Missing read or read_all permission on user")
+    filters = SchemaUserFilter(email=email)
+    user = await find_one_business_element(
+        business_element=BusinessDomain.USER,
+        methodDAO=UserDAO,
+        access=access,
+        filters=filters,
+        session=session,
+    )
+    return user
 
 
 async def update_user(
@@ -94,50 +109,61 @@ async def update_user(
     session: AsyncSession,
     user_id: UUID,
 ):
-    filters_dict = filters.model_dump(exclude_unset=True)
-    password = filters_dict.get("password")
-    if password is not None:
-        password_hash = get_password_hash(password)
-        filters_dict["password"] = password_hash
-
-    if "update_all_permission" in access.permissions:
-        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-        await session.commit()
-        return result
-    if "update_permission" in access.permissions and user_id == access.user_id:
-        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-        await session.commit()
-        return result
-
-    logger.error("PermissionDenied")
-    raise PermissionDenied(
-        custom_detail="Missing update or update_all permission on user"
+    return await update_one_business_element(
+        business_element=BusinessDomain.USER,
+        methodDAO=UserDAO,
+        access=access,
+        data=filters,
+        session=session,
+        business_element_id=user_id,
     )
 
 
-async def soft_delete_user(user_id: UUID, access: AccessContext, session: AsyncSession):
-    filters_dict = {"id": user_id, "is_active": False}
-    if "delete_all_permission" in access.permissions:
-        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-        await session.commit()
-        return result
-    if "delete_permission" in access.permissions and user_id == access.user_id:
-        result = await UserDAO.update_one(model_id=user_id, session=session, values=filters_dict)
-        await session.commit()
-        return result
-    logger.error("PermissionDenied")
-    raise PermissionDenied(
-        custom_detail="Missing delete or delete_all permission on user"
+async def user_change_password(
+    access: AccessContext,
+    filters: SchemaChangePasswordRequest,
+    session: AsyncSession,
+    user_id: UUID,
+):
+    # compare_digest - предназначен для безопасного сравнения секретов (паролей, токенов, хешей).
+    # Работает за фиксированное время, независимо от того, где отличие
+    if not compare_digest(filters.new_password, filters.new_password_confirm):
+        raise BadCredentialsError
+
+    hash_old_password = await get_hash_password(user_id=user_id, session=session)
+    if not await verify_password(filters.old_password, hash_old_password):
+        raise BadCredentialsError
+
+    data = SchemaUserPasswordUpdate(
+        password=get_password_hash(filters.new_password)
+    )
+    return await update_one_business_element(
+        business_element=BusinessDomain.USER,
+        methodDAO=UserDAO,
+        access=access,
+        data=data,
+        session=session,
+        business_element_id=user_id,
+    )
+
+
+async def soft_delete_user(
+    user_id: UUID, access: AccessContext, session: AsyncSession
+):
+    filters = SchemaUserFilter(id=user_id, is_active=False)
+    return await update_one_business_element(
+        business_element=BusinessDomain.USER,
+        methodDAO=UserDAO,
+        access=access,
+        data=filters,
+        session=session,
+        business_element_id=user_id,
     )
 
 
 async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
-    fake_uuid = uuid4()
-    access = AccessContext(
-        user_id=fake_uuid, permissions=["read_all_permission", "create_permission"]
-    )
     existing_user = await get_user_by_email(
-        access=access, email=user_in.email, session=session
+        access=FAKE_ACCESS_CONTEXT, email=user_in.email, session=session
     )
     if existing_user:
         logger.error("EmailAlreadyRegisteredError")
@@ -157,7 +183,7 @@ async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
         session=session, filters=SchemaRoleFilter(name="user")
     )
     data = SchemaUserRolesCreate(user_id=user.id, role_id=role_user.id)
-    await add_role_to_user(data=data, access=access, session=session)
+    await add_role_to_user(data=data, access=FAKE_ACCESS_CONTEXT, session=session)
 
     return user
 
@@ -168,13 +194,6 @@ async def get_hash_password(
     filter_obj = SchemaUserFilter(id=user_id)
     user = await UserPasswordDAO.find_one(filters=filter_obj, session=session)
     return user.password
-
-
-async def get_user_roles(user_id: UUID, session: AsyncSession) -> List[str]:
-    user = await UserDAO.get_with_roles(user_id=user_id, session=session)
-    if user is None:
-        return []
-    return [role.name for role in user.roles]
 
 
 async def set_access_token_in_cookie(response: Response, access_token: AccessToken):
@@ -221,58 +240,17 @@ async def set_refresh_token_in_cookie(response: Response, refresh_token: Refresh
         raise InvalidTokenError
 
 
-async def authenticate_user(
-    user_in: SchemaUserLoginMain, session: AsyncSession
-) -> Token:
-    login = user_in.email if user_in.username is None else user_in.username
-    fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-    user = await get_user_by_email(access=access, email=login, session=session)
 
-    if not user:
-        logger.error("в БД отсутствует user_id", user_id=user.id)
-        raise BadCredentialsError
-    if not user.is_active:
-        logger.error("пользователь отключён", user_id=user.id)
-        raise UserInactiveError
-    hash_password = await get_hash_password(user_id=user.id, session=session)
-    if not await AuthService.verify_password(user_in.password, hash_password):
-        raise BadCredentialsError
-
-    role_names = await get_list_user_rolenames(access=access, session=session, user_id=user.id)
-
-    access_token = AuthService.create_access_token(
-        data={"sub": str(user.id), "role": role_names}
-    )
-    refresh_token = AuthService.create_refresh_token({"sub": str(user.id)})
-
-    return Token(access_token=access_token, refresh_token=refresh_token)
-
-
-async def authenticate_user_api(
-    user_in: SchemaUserLogin, session: AsyncSession
-) -> Token:
-    user = SchemaUserLoginMain(email=user_in.email, password=user_in.password)
-    return await authenticate_user(user_in=user, session=session)
-
-
-async def authenticate_user_swagger(
-    user_in: SchemaUserSwaggerLogin, session: AsyncSession
-) -> Token:
-    user = SchemaUserSwaggerLogin(username=user_in.username, password=user_in.password)
-    return await authenticate_user(user_in=user, session=session)
 
 
 async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Token:
-    payload = AuthService.decode_refresh_token(refresh_token)
+    payload = await decode_refresh_token(refresh_token)
     user_id = payload.sub
     if not user_id:
         logger.error("BadCredentialsError")
         raise BadCredentialsError
 
-    fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-    user = await get_user_by_id(access=access, user_id=user_id, session=session)
+    user = await get_user_by_id(access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session)
 
     if not user:
         logger.error("BadCredentialsError")
@@ -281,27 +259,26 @@ async def refresh_user_tokens(refresh_token: str, session: AsyncSession) -> Toke
         logger.error("UserInactiveError")
         raise UserInactiveError
 
-    role_names = await get_user_roles(user_id=user.id, session=session)
-    new_access = AuthService.create_access_token(
+    role_names = await get_list_user_rolenames(
+        access=FAKE_ACCESS_CONTEXT, session=session, user_id=user.id
+    )
+    new_access = create_access_token(
         data={"sub": str(user.id), "role": role_names}
     )
-    new_refresh = AuthService.create_refresh_token({"sub": str(user.id)})
+    new_refresh = create_refresh_token({"sub": str(user.id)})
 
-    AuthService.ban_token(refresh_token)
-
+    token_blacklist.ban(refresh_token)
     return Token(access_token=new_access, refresh_token=new_refresh)
 
 
 async def refresh_access_token(refresh_token: str, session: AsyncSession) -> AccessToken:
-    payload = AuthService.decode_refresh_token(refresh_token)
+    payload = await decode_refresh_token(refresh_token)
     user_id = payload.sub
     if not user_id:
         logger.error("BadCredentialsError")
         raise BadCredentialsError
 
-    fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-    user = await get_user_by_id(access=access, user_id=user_id, session=session)
+    user = await get_user_by_id(access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session)
 
     if not user:
         logger.error("BadCredentialsError")
@@ -310,8 +287,10 @@ async def refresh_access_token(refresh_token: str, session: AsyncSession) -> Acc
         logger.error("UserInactiveError")
         raise UserInactiveError
 
-    role_names = await get_user_roles(user_id=user.id, session=session)
-    new_access = AuthService.create_access_token(
+    role_names = await get_list_user_rolenames(
+        access=FAKE_ACCESS_CONTEXT, session=session, user_id=user.id
+    )
+    new_access = create_access_token(
         data={"sub": str(user.id), "role": role_names}
     )
     access_token = new_access
@@ -357,9 +336,8 @@ async def get_all_user_roles(
     filters: SchemaUserRolesFilter, access: AccessContext, session: AsyncSession
 ) -> List[dict]:
     if "read_all_permission" in access.permissions:
-        return await UserDAO.get_from_user_roles(
-            session=session, user_id=filters.user_id
-        )
+
+        return await UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
 
     if "read_permission" in access.permissions:
         if filters.user_id is not None and filters.user_id != access.user_id:
@@ -367,8 +345,11 @@ async def get_all_user_roles(
             raise PermissionDenied(
                 custom_detail="Missing read or read_all permission on user_roles"
             )
-        filters.user_id = access.user_id
-        return UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
+        #filters.user_id = access.user_id
+        return await get_list_user_rolenames(
+            access=FAKE_ACCESS_CONTEXT, session=session, user_id=access.user_id
+        )
+        #return UserDAO.get_from_user_roles(session=session, user_id=filters.user_id)
 
     logger.error("PermissionDenied")
     raise PermissionDenied(
@@ -377,9 +358,7 @@ async def get_all_user_roles(
 
 
 async def ensure_user_is_active(user_id: UUID, session: AsyncSession) -> bool:
-    fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
-    user = await get_user_by_id(access=access, user_id=user_id, session=session)
+    user = await get_user_by_id(access=FAKE_ACCESS_CONTEXT, user_id=user_id, session=session)
     if user is None:
         raise BadCredentialsError
     if not user.is_active:

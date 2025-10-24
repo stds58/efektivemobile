@@ -5,18 +5,19 @@ from fastapi import APIRouter, Depends, status, Cookie, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.permission import AccessContext
 from app.schemas.user import SchemaUserCreate, SchemaUserLogin, UserPublic
-from app.services.auth_service import AuthService
 from app.services.user import (
     create_user,
-    authenticate_user_api,
     refresh_access_token,
     #refresh_user_tokens,
     set_access_token_in_cookie,
     set_refresh_token_in_cookie,
     get_user_by_email,
 )
+from app.services.auth.authenticate import authenticate_user_api
 from app.dependencies.get_db import connection
-
+from app.services.auth.blacklist import token_blacklist
+from app.core.stubs import FAKE_ACCESS_CONTEXT
+from app.services.auth.tokens import decode_access_token, decode_refresh_token
 
 logger = structlog.get_logger()
 
@@ -49,10 +50,8 @@ async def login_for_access_token(
     session: AsyncSession = Depends(connection()),
 ) -> List[dict]:
     filters = SchemaUserLogin(email=form_data.email, password="*****")
-    fake_uuid = uuid4()
-    access = AccessContext(user_id=fake_uuid, permissions=["read_all_permission"])
     user = await get_user_by_email(
-        access=access, email=form_data.email, session=session
+        access=FAKE_ACCESS_CONTEXT, email=form_data.email, session=session
     )
 
     logger.debug("Login user", user_id=user.id, filters=filters)
@@ -72,18 +71,18 @@ async def logout(
     access_token: str = Cookie(None, alias="access_token"),
     refresh_token: str = Cookie(None, alias="refresh_token"),
 ) -> dict:
-    payload = AuthService.decode_access_token(token=access_token)
+    payload = await decode_access_token(token=access_token)
     user_id = payload.sub
 
     if access_token:
         logger.debug("Logout user: ban access token", user_id=user_id)
-        AuthService.ban_token(access_token)
+        token_blacklist.ban(access_token)
         logger.info("Logouted user: baned access token", user_id=user_id)
     else:
         logger.debug("Logout user: has no access token", user_id=user_id)
     if refresh_token:
         logger.debug("Logout user: ban refresh token", user_id=user_id)
-        AuthService.ban_token(refresh_token)
+        token_blacklist.ban(refresh_token)
         logger.info("Logouted user: baned refresh token", user_id=user_id)
     else:
         logger.debug("Logout user: has no refresh token", user_id=user_id)
@@ -106,7 +105,7 @@ async def refresh_token_endpoint(
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Refresh token missing")
 
-    payload = AuthService.decode_refresh_token(token=refresh_token)
+    payload = await decode_refresh_token(token=refresh_token)
     user_id = payload.sub
 
     logger.debug("Refresh access token", user_id=user_id)

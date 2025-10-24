@@ -175,7 +175,7 @@ ACCESS_RULES_DATA = [
         "read_permission": True,
         "read_all_permission": False,
         "create_permission": False,
-        "update_permission": False,
+        "update_permission": True,
         "update_all_permission": False,
         "delete_permission": False,
         "delete_all_permission": False,
@@ -216,7 +216,7 @@ ACCESS_RULES_DATA = [
     {
         "role_name": "user",
         "businesselement_name": "access_rule",
-        "read_permission": False,
+        "read_permission": True,
         "read_all_permission": False,
         "create_permission": False,
         "update_permission": False,
@@ -227,7 +227,7 @@ ACCESS_RULES_DATA = [
     {
         "role_name": "user",
         "businesselement_name": "user_roles",
-        "read_permission": False,
+        "read_permission": True,
         "read_all_permission": False,
         "create_permission": False,
         "update_permission": False,
@@ -239,12 +239,12 @@ ACCESS_RULES_DATA = [
         "role_name": "user",
         "businesselement_name": "fileupload",
         "read_permission": True,
-        "read_all_permission": True,
+        "read_all_permission": False,
         "create_permission": True,
         "update_permission": True,
-        "update_all_permission": True,
+        "update_all_permission": False,
         "delete_permission": True,
-        "delete_all_permission": True,
+        "delete_all_permission": False,
     },
 ]
 

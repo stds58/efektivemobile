@@ -1,10 +1,7 @@
-from datetime import datetime, timedelta, timezone
 import bcrypt
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
-import jwt
 import structlog
-from app.core.config import settings
 from app.exceptions.base import VerifyHashError
 
 
@@ -42,18 +39,3 @@ def get_password_hash(password: str) -> str:
     except TypeError as exc:
         logger.error("TypeError", error=str(exc))
         raise VerifyHashError from exc
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
-    return encoded_jwt

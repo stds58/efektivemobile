@@ -12,9 +12,9 @@ from app.utils.sample_data import (
     PRODUCT_DATA,
     ORDER_DATA,
 )
-from app.core.security import get_password_hash
 from app.core.config import settings
 from app.db.session import create_session_factory
+from app.services.auth.password import get_password_hash
 
 
 logger = structlog.get_logger()

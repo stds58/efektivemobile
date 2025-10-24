@@ -5,7 +5,7 @@ from app.services.user import UserService
 from app.schemas.user import SchemaUserCreate
 from app.exceptions.base import EmailAlreadyRegisteredError, BadCredentialsError, UserInactiveError
 from app.models.user import User
-from app.core.security import get_password_hash
+from app.services.auth.password import get_password_hash
 
 
 # pylint: disable=redefined-outer-name

@@ -3,8 +3,8 @@ from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
-from app.schemas.user import SchemaUserPatch, SchemaUserFilter, SchemaUserBase, SchemaChangePassword
-from app.services.user import find_many_user, update_user, soft_delete_user, get_user_by_id
+from app.schemas.user import SchemaUserPatch, SchemaUserFilter, SchemaUserBase, SchemaChangePasswordRequest
+from app.services.user import find_many_user, update_user, soft_delete_user, get_user_by_id, user_change_password
 from app.dependencies.private_router import private_route_dependency
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
@@ -34,15 +34,18 @@ async def get_me(
 
 @router.patch("/me", summary="Сhange_password" )
 async def change_password(
-    user_in: SchemaChangePassword,
+    filters: SchemaChangePasswordRequest,
     request_context: RequestContext = private_route_dependency(
         business_element=BusinessDomain.USER,
         isolation_level=IsolationLevel.REPEATABLE_READ,
     ),
 ):
     logger.info("Сhange_password")
-    updated_user = await update_user(
-        access=request_context.access, filters=user_in, session=request_context.session, user_id=request_context.access.user_id
+    updated_user = await user_change_password(
+        access=request_context.access,
+        filters=filters,
+        session=request_context.session,
+        user_id=request_context.access.user_id
     )
     logger.info("Сhanged_password")
     return updated_user

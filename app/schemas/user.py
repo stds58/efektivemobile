@@ -64,9 +64,6 @@ class SchemaUserCreate(BaseModel):
 
 
 class SchemaUserPatch(BaseModel):
-    password: Annotated[str, StringConstraints(min_length=5, max_length=50)] | None = (
-        Field(None)
-    )
     first_name: (
         Annotated[str, StringConstraints(min_length=3, max_length=50)] | None
     ) = Field(None)
@@ -75,13 +72,20 @@ class SchemaUserPatch(BaseModel):
     )
 
 
-class SchemaChangePassword(BaseModel):
-    password: str = Field(
+class SchemaChangePasswordRequest(BaseModel):
+    old_password: str = Field(
         ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
     )
-    password_confirm: str = Field(
+    new_password: str = Field(
         ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
     )
+    new_password_confirm: str = Field(
+        ..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков"
+    )
+
+
+class SchemaUserPasswordUpdate(BaseModel):
+    password: str
 
 
 class SchemaUserSwaggerLogin(BaseModel):
