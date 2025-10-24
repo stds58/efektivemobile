@@ -13,7 +13,6 @@ from app.schemas.user_role import (
 )
 from app.schemas.permission import AccessContext
 from app.services.base import (
-    find_many_business_element,
     add_one_business_element,
     delete_one_business_element,
 )

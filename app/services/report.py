@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,8 +18,8 @@ async def get_report(
     business_element: BusinessDomain,
     access: AccessContext,
     session: AsyncSession,
-    file_upload_id=UUID,
-    extension=str,
+    file_upload_id: UUID,
+    extension: Optional[str] = None,
     sheet_name=str,
 ):
     file = await find_one_scoped_by_id(

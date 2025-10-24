@@ -1,4 +1,3 @@
-from typing import List
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -104,8 +103,6 @@ async def seed_users(session: AsyncSession):
 
 
 async def seed_role_user(session: AsyncSession):
-    from app.models.user_role import UserRole
-
     # 1. Получаем всех пользователей из БД по email
     result = await session.execute(select(User.email, User.id))
     user_email_to_id = {email: user_id for email, user_id in result}

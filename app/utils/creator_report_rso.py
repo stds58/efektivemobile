@@ -85,9 +85,9 @@ class DebtReport:
         df_with_overdue = OverdueCalculator.calculate(df)
 
         # 3. Агрегация
-        result = RSOAggregator.aggregate(df_with_overdue)
+        result_report = RSOAggregator.aggregate(df_with_overdue)
 
-        return result
+        return result_report
 
 
 if __name__ == "__main__":

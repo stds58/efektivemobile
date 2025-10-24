@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.services.user import (
     add_role_to_user,
-    remove_role_from_user,
     get_all_user_roles,
 )
 from app.services.user_role import delete_one_user_role, find_one_user_role
@@ -16,7 +15,6 @@ from app.schemas.permission import (
 from app.schemas.user_role import SchemaUserRoleFilter
 from app.schemas.permission import RequestContext
 from app.schemas.user import SchemaUserBase
-from app.crud.user_role import UserRoleDAO
 from app.exceptions.base import ObjectsNotFoundByIDError
 
 

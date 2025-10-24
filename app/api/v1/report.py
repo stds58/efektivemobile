@@ -1,15 +1,14 @@
 from uuid import UUID
-from fastapi import Request
 from pathlib import Path
 import structlog
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.dependencies.private_router import private_route_dependency
 from app.services.report import get_report
 from app.schemas.permission import RequestContext
-from app.dependencies.get_db import auth_db_context
+
 
 
 logger = structlog.get_logger()

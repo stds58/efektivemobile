@@ -1,21 +1,11 @@
-# pylint: disable=not-callable
-from typing import Optional, List
-from uuid import UUID
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, insert
-from sqlalchemy.orm import selectinload
-from app.models import Role, AccessRule, BusinessElement
-from app.models.user import User #, user_role_association
+from app.models.user import User
 from app.schemas.user import (
     SchemaUserPatch,
     SchemaUserBase,
     SchemaUserFilter,
     UserHashPassword,
 )
-from app.schemas.permission import SchemaPermissionBase, SchemaUserRolesBase
 from app.crud.base import BaseDAO
-from app.exceptions.base import ObjectsNotFoundByIDError, IntegrityErrorException
 
 
 class UserDAO(BaseDAO[User, SchemaUserPatch, SchemaUserFilter]):

@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.dependencies.private_router import private_route_dependency
 from app.schemas.user_role import (
-    SchemaUserRoleBase,
     SchemaUserRoleCreate,
     SchemaUserRoleFilter,
 )

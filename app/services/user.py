@@ -185,7 +185,7 @@ async def create_user(user_in: SchemaUserCreate, session: AsyncSession):
     return user
 
 
-async def get_hash_password(
+async def get_hashed_password(
     user_id: UUID, session: AsyncSession
 ) -> Optional[UserHashPassword]:
     filter_obj = SchemaUserFilter(id=user_id)

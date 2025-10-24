@@ -1,10 +1,8 @@
-from uuid import uuid4
 import structlog
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.permission import AccessContext
 from app.schemas.token import Token
 from app.schemas.user import SchemaUserLogin
 from app.services.auth.blacklist import token_blacklist

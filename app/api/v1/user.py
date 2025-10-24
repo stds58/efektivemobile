@@ -4,7 +4,7 @@ import structlog
 from fastapi import APIRouter, Depends, status
 from app.core.enums import BusinessDomain, IsolationLevel
 from app.schemas.user import SchemaUserPatch, SchemaUserFilter, SchemaUserBase, SchemaChangePasswordRequest
-from app.services.user import find_many_user, update_user, soft_delete_user, get_user_by_id, user_change_password
+from app.services.user import find_many_user, update_user, soft_delete_user, user_change_password #, get_user_by_id
 from app.dependencies.private_router import private_route_dependency
 from app.schemas.base import PaginationParams
 from app.schemas.permission import RequestContext
@@ -48,7 +48,7 @@ async def change_password(
     ),
 ):
     logger.info("Сhange_password")
-    updated_user = await user_change_password(
+    await user_change_password(
         access=request_context.access,
         filters=filters,
         session=request_context.session,

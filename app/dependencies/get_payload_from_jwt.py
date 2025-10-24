@@ -1,5 +1,5 @@
 from typing import List
-from uuid import UUID, uuid4
+from uuid import UUID
 import structlog
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +8,7 @@ from app.services.auth.tokens import decode_access_token
 from app.services.user import ensure_user_is_active
 from app.schemas.permission import AccessContext
 from app.schemas.user import SchemaUserFilter
-from app.services.user_role import find_one_user_role_m2m, find_many_user_role_m2m
+from app.services.user_role import find_one_user_role_m2m
 from app.services.access_rule import get_user_access_rules_for_business_element
 
 

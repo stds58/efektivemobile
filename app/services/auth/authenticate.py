@@ -1,29 +1,20 @@
-from typing import Optional, List
-from uuid import UUID
 import structlog
-from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import settings
-from app.core.enums import BusinessDomain
 from app.core.stubs import FAKE_ACCESS_CONTEXT
-from app.schemas.token import Token, AccessToken, RefreshToken
+from app.schemas.token import Token
 from app.schemas.user import (
-    SchemaUserCreate,
-    SchemaUserPatch,
-    SchemaUserFilter,
     SchemaUserLogin,
     SchemaUserSwaggerLogin,
     SchemaUserLoginMain,
-    UserHashPassword,
 )
-from app.services.user_role import find_one_user_role_m2m, find_many_user_role_m2m, get_list_user_rolenames
-from app.services.auth.tokens import create_access_token, create_refresh_token, decode_refresh_token
-from app.services.auth.password import verify_password, get_password_hash
+from app.services.user_role import get_list_user_rolenames
+from app.services.auth.tokens import create_access_token, create_refresh_token
+from app.services.auth.password import verify_password
 from app.exceptions.base import (
     BadCredentialsError,
     UserInactiveError,
 )
-from app.services.user import get_hash_password, get_user_by_email
+from app.services.user import get_hashed_password, get_user_by_email
 
 
 logger = structlog.get_logger()
@@ -37,12 +28,15 @@ async def authenticate_user(
 
     if not user:
         logger.error("в БД отсутствует user_id", user_id=user.id)
+        # +1 попытка в список
         raise BadCredentialsError
     if not user.is_active:
         logger.error("пользователь отключён", user_id=user.id)
+        # +1 попытка в список
         raise UserInactiveError
-    hash_password = await get_hash_password(user_id=user.id, session=session)
+    hash_password = await get_hashed_password(user_id=user.id, session=session)
     if not await verify_password(user_in.password, hash_password):
+        # +1 попытка в список
         raise BadCredentialsError
 
     role_names = await get_list_user_rolenames(access=FAKE_ACCESS_CONTEXT, session=session, user_id=user.id)
